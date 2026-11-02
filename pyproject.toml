@@ -8,7 +8,7 @@ dependencies = ["numpy>=1.26"]
 [project.optional-dependencies]
 sim = ["mujoco>=3.3"]
 teacher = ["boto3>=1.34", "requests>=2.31"]
-dev = ["pytest>=8", "matplotlib>=3.8"]
+dev = ["pytest>=8", "matplotlib>=3.8", "imageio[ffmpeg]>=2.34", "pillow>=10"]
 
 [build-system]
 requires = ["hatchling"]

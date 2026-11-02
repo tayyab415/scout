@@ -17,6 +17,7 @@ from .layout import Layout, Obj, Room
 BODY_RADIUS = 0.25          # m, clearance kept around the body
 BODY_Z = (0.1, 1.7)         # m, height band that must be clear to walk
 EYE_Z = 1.55                # m, head-camera height
+CEILING_GROUP = 2           # ceilings get their own render group so outside cameras can hide them (THOR uses 3-5)
 
 
 def house_files(root: str, name: str) -> tuple[str, str, str]:
@@ -49,15 +50,25 @@ def _load_spec(path: str):
     return spec
 
 
+def _house_spec(root: str, name: str, ceiling: bool):
+    """The `*_ceiling.xml` file is the whole house plus ceiling bodies, so load one file or the other, never both."""
+    xml, cxml, _ = house_files(root, name)
+    use_ceiling = ceiling and os.path.exists(cxml)
+    spec = _load_spec(cxml if use_ceiling else xml)
+    if use_ceiling:
+        for b in spec.bodies:
+            if (b.name or "").startswith("ceiling_"):
+                for g in b.geoms:
+                    g.group = CEILING_GROUP
+    return spec
+
+
 def build_house(root: str, name: str, ceiling: bool = True):
     """Static house only (for free-camera rendering and occupancy)."""
     import mujoco
-    xml, cxml, _ = house_files(root, name)
     world = mujoco.MjSpec()
     world.compiler.boundmass, world.compiler.boundinertia = 1e-3, 1e-6
-    parts = [(xml, "h_")] + ([(cxml, "c_")] if ceiling and os.path.exists(cxml) else [])
-    for path, prefix in parts:
-        world.attach(_load_spec(path), prefix=prefix, frame=world.worldbody.add_frame(pos=[0, 0, 0]))
+    world.attach(_house_spec(root, name, ceiling), prefix="h_", frame=world.worldbody.add_frame(pos=[0, 0, 0]))
     world.visual.headlight.ambient = [0.5] * 3
     world.visual.headlight.diffuse = [0.5] * 3
     world.visual.headlight.specular = [0.05] * 3
@@ -65,22 +76,22 @@ def build_house(root: str, name: str, ceiling: bool = True):
     return world.compile()
 
 
-def build_body_world(root: str, name: str, ceiling: bool = False, fovy: float = 75):
+def build_body_world(root: str, name: str, ceiling: bool = True, fovy: float = 75):
     """HumEnv robot first (its bodies, sensors and actuators must keep their indices), then the house.
 
     SMPL body frames are +x left, +y up, +z forward; the `eye` camera looks along the head's +z.
+    Ceiling geoms are put in group CEILING_GROUP.
     """
     import humenv
     import mujoco
-    xml, cxml, _ = house_files(root, name)
     world = mujoco.MjSpec.from_file(os.path.join(os.path.dirname(humenv.__file__), "assets", "robot.xml"))
     world.compiler.boundmass, world.compiler.boundinertia = 1e-3, 1e-6
     world.geom("floor").pos = [0, 0, -0.003]
     world.body("Head").add_camera(name="eye", pos=[0, 0.05, 0.10], xyaxes=[-1, 0, 0, 0, 1, 0], fovy=fovy)
-    parts = [(xml, "h_")] + ([(cxml, "c_")] if ceiling and os.path.exists(cxml) else [])
-    for path, prefix in parts:
-        world.attach(_load_spec(path), prefix=prefix, frame=world.worldbody.add_frame(pos=[0, 0, 0]))
+    world.attach(_house_spec(root, name, ceiling), prefix="h_", frame=world.worldbody.add_frame(pos=[0, 0, 0]))
     world.visual.global_.offwidth, world.visual.global_.offheight = 1280, 960
+    world.visual.headlight.ambient = [0.45] * 3
+    world.visual.headlight.diffuse = [0.5] * 3
     return world.compile()
 
 
