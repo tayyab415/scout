@@ -22,7 +22,7 @@ class TeacherPolicy(Policy):
     def choose(self, memory, body, frontiers, goal, budget_left):
         user = describe(memory, body, frontiers, goal, budget_left)
         try:
-            text, info = self.llm.complete(SYSTEM, user)
+            text, info = self.llm.complete(SYSTEM, user, max_tokens=300)
         except Exception as e:  # network or quota trouble: fall back, but count it
             text, info = f"ERROR {type(e).__name__}: {e}", {}
         self.calls += 1

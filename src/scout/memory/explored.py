@@ -44,32 +44,32 @@ class Memory:
         self.seen = np.zeros(self.layout.grid.shape, bool)
 
     # --- sensing --------------------------------------------------------------------------------
-    def _blocked(self, ij) -> bool:
-        g = self.layout.grid
-        if not g.inside(ij):
-            return True
-        return bool(self.layout.walls[ij]) if self.layout.walls is not None else False
-
-    def _ray(self, start, angle: float, length: float):
-        """Cells along a ray until a wall or the end. Yields grid cells."""
+    def _cast(self, xy: np.ndarray, angles: np.ndarray, length: float):
+        """Cells along many rays at once, cut at the first wall. Returns (i, j) arrays and per-ray reach (m)."""
         g = self.layout.grid
         step = g.res * 0.5
-        d = np.array([math.cos(angle), math.sin(angle)])
-        for k in range(int(length / step)):
-            ij = g.cell(start + d * k * step)
-            if self._blocked(ij):
-                return
-            yield ij
+        n = int(length / step)
+        r = np.arange(n) * step
+        pts = xy[None, None, :] + r[None, :, None] * np.stack([np.cos(angles), np.sin(angles)], 1)[:, None, :]
+        ij = np.floor((pts - g.origin) / g.res).astype(int)
+        i, j = ij[..., 0], ij[..., 1]
+        inside = (i >= 0) & (i < g.shape[0]) & (j >= 0) & (j < g.shape[1])
+        ic, jc = np.clip(i, 0, g.shape[0] - 1), np.clip(j, 0, g.shape[1] - 1)
+        blocked = ~inside
+        if self.layout.walls is not None:
+            blocked |= self.layout.walls[ic, jc]
+        first = np.where(blocked.any(1), blocked.argmax(1), n)
+        keep = np.arange(n)[None, :] < first[:, None]
+        return ic[keep], jc[keep], first * step
 
     def look(self, xy, yaw: float, t: float = 0.0, fov_deg: float = FOV_DEG) -> list[str]:
         """Update memory from one view. Returns keys of objects seen for the first time."""
         xy = np.asarray(xy, float)
         self.trail.append(xy.copy())
         half = math.radians(fov_deg) / 2
-        for a in np.linspace(yaw - half, yaw + half, 48):
-            for ij in self._ray(xy, a, VIEW_RANGE):
-                self.seen[ij] = True
-        new = []
+        i, j, _ = self._cast(xy, np.linspace(yaw - half, yaw + half, 48), VIEW_RANGE)
+        self.seen[i, j] = True
+        cand = []
         for k, o in enumerate(self.layout.objects):
             if o.type not in GOAL_TYPES:
                 continue
@@ -78,17 +78,20 @@ class Memory:
             if dist > VIEW_RANGE or dist < 1e-6:
                 continue
             off = (math.atan2(v[1], v[0]) - yaw + math.pi) % (2 * math.pi) - math.pi
-            if abs(off) > half:
-                continue
+            if abs(off) <= half:
+                cand.append((k, o, dist, math.atan2(v[1], v[0])))
+        new = []
+        if cand:
             # line of sight to within 0.4 m of the object (objects sit against walls)
-            cells = list(self._ray(xy, math.atan2(v[1], v[0]), max(dist - 0.4, 0.0)))
-            reach = len(cells) * self.layout.grid.res * 0.5
-            if reach + 1e-6 < max(dist - 0.4, 0.0) - self.layout.grid.res:
-                continue
-            key = f"{o.type}#{k}"
-            if key not in self.sightings:
-                new.append(key)
-            self.sightings[key] = Sighting(o.type, o.xy.copy(), o.room, t)
+            need = np.array([max(d - 0.4, 0.0) for _, _, d, _ in cand])
+            _, _, reach = self._cast(xy, np.array([a for _, _, _, a in cand]), max(float(need.max()), self.layout.grid.res))
+            for (k, o, _, _), nd, rc in zip(cand, need, reach):
+                if rc + 1e-6 < nd - self.layout.grid.res:
+                    continue
+                key = f"{o.type}#{k}"
+                if key not in self.sightings:
+                    new.append(key)
+                self.sightings[key] = Sighting(o.type, o.xy.copy(), o.room, t)
         return new
 
     def look_around(self, xy, t: float = 0.0) -> list[str]:

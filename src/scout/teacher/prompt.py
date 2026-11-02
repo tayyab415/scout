@@ -57,7 +57,8 @@ def describe(memory: Memory, body: Body, frontiers: list[tuple[Frontier, float]]
         dx, dy = f.xy - body.xy
         lines.append(f"[{k}] at ({f.xy[0]:.1f}, {f.xy[1]:.1f}), {d:.1f} m walk to the {compass(dx, dy)}, "
                      f"{f.size * lay.grid.res:.1f} m of unseen edge, {area}")
-    lines.append('Reply as {"choice": <opening number>, "why": "<one short sentence>"}')
+    lines.append('First think about where this is likely to be, then reply as '
+                 '{"why": "<one or two sentences>", "choice": <opening number>}')
     return "\n".join(lines)
 
 
