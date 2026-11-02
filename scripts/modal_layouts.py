@@ -16,7 +16,7 @@ image = (modal.Image.debian_slim(python_version="3.11")
          .add_local_dir(SRC, "/pkg"))
 
 
-@app.function(image=image, volumes={"/data": vol}, cpu=2, memory=4096, timeout=900, retries=0, max_containers=60)
+@app.function(image=image, volumes={"/data": vol}, cpu=2, memory=4096, timeout=900, retries=0, max_containers=30)
 def build(name: str) -> tuple[str, str]:
     import sys
     import time
@@ -31,8 +31,7 @@ def build(name: str) -> tuple[str, str]:
     except Exception as e:  # keep going; report at the end
         return name, f"error: {type(e).__name__}: {str(e)[:200]}"
     os.makedirs(f"{ROOT}/layouts", exist_ok=True)
-    lay.save(out)
-    vol.commit()
+    lay.save(out)  # the volume is committed when the container exits
     return name, f"ok {time.time() - t:.0f}s free={int(lay.grid.free.sum())} walls={int(lay.walls.sum())} objs={len(lay.objects)}"
 
 
