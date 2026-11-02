@@ -54,3 +54,16 @@ def test_memory_never_marks_unseen_rooms():
     m.look((2.5, 1.5), yaw=math.pi)  # facing away from the doorway
     seen_rooms = {t for _, t, _ in m.rooms_seen()}
     assert "Bedroom" in seen_rooms and "Kitchen" not in seen_rooms
+
+
+def test_narrow_doorway_stays_an_opening():
+    """Regression: after body clearance a doorway is ~4 cells wide and must still count as an opening."""
+    lay = corridor_house()
+    lay.grid.free[29:32, :] = False
+    lay.grid.free[29:32, 13:17] = True  # 0.4 m of walkable width, like an eroded doorway
+    m = Memory(lay)
+    m.seen[:30, :] = True               # whole bedroom and the first doorway column seen
+    m.seen[30:32, :] = True
+    m.seen[30:32, 13:17] = False        # rest of the doorway and the kitchen unseen
+    near_door = [f for f in m.frontiers() if abs(f.xy[0] - 2.95) < 0.2]
+    assert near_door and near_door[0].size == 4, [(f.xy, f.size) for f in m.frontiers()]

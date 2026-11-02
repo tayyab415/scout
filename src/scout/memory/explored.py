@@ -105,8 +105,11 @@ class Memory:
     def known_free(self) -> np.ndarray:
         return self.seen & self.layout.grid.free
 
-    def frontiers(self, min_size: int = 6) -> list[Frontier]:
-        """Known walkable cells that border unseen cells, grouped into clusters."""
+    def frontiers(self, min_size: int = 2) -> list[Frontier]:
+        """Known walkable cells that border unseen cells, grouped into clusters.
+
+        Doorways are only ~4 cells wide once the body's clearance is taken off, so the size
+        threshold must stay small or doorways stop counting as openings."""
         kf = self.known_free
         unseen = ~self.seen
         edge = np.zeros_like(kf)
