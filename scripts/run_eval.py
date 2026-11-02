@@ -116,7 +116,8 @@ def main():
     ap.add_argument("--layouts", default="data/layouts")
     ap.add_argument("--houses", type=int, default=40)
     ap.add_argument("--per-house", type=int, default=2)
-    ap.add_argument("--offset", type=int, default=0, help="skip this many layout files (keeps splits apart)")
+    ap.add_argument("--split", default="test", choices=["test", "train", "all"])
+    ap.add_argument("--splits", default="configs/splits.json")
     ap.add_argument("--policies", default="nearest,size_over_dist,random")
     ap.add_argument("--modes", default="find,explore_find")
     ap.add_argument("--seed", type=int, default=0)
@@ -128,7 +129,10 @@ def main():
     ap.add_argument("--out", default="runs/eval")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    paths = sorted(glob.glob(f"{a.layouts}/*.npz"))[a.offset:]
+    paths = sorted(glob.glob(f"{a.layouts}/*.npz"))
+    if a.split != "all":
+        keep = set(json.load(open(a.splits))[a.split])
+        paths = [p for p in paths if os.path.basename(p)[:-4] in keep]
     eps = sample_episodes(paths, a.houses, a.per_house, a.seed, a.min_rooms)
     budgets = {"find_m": a.find_m, "explore_m": a.explore_m, "after_m": a.after_m}
     json.dump(vars(a), open(f"{a.out}/args.json", "w"), indent=1)
