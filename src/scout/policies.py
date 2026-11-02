@@ -40,3 +40,33 @@ class LargestNearFrontier(Policy):
 
     def choose(self, memory, body, frontiers, goal, budget_left):
         return int(np.argmax([f.size / (1.0 + d) for f, d in frontiers]))
+
+
+class OracleFrontier(Policy):
+    """Privileged upper bound: knows the full map and picks the opening with the shortest true walk to the goal.
+    With no goal it falls back to the nearest opening."""
+    name = "oracle_frontier"
+
+    def __init__(self):
+        self._cache = {}
+
+    def _dist(self, layout, goal):
+        from .agent import REACH_M
+        from .world.grid import geodesic
+        key = (layout.name, goal)
+        if key not in self._cache:
+            g = layout.grid
+            src = []
+            for o in layout.objects_of(goal):
+                ci, cj = g.cell(o.xy)
+                r = int(np.ceil(REACH_M / g.res))
+                src += [(i, j) for i in range(ci - r, ci + r + 1) for j in range(cj - r, cj + r + 1)
+                        if g.is_free((i, j)) and np.hypot(i - ci, j - cj) * g.res <= REACH_M]
+            self._cache[key] = geodesic(g.free, src, g.res)
+        return self._cache[key]
+
+    def choose(self, memory, body, frontiers, goal, budget_left):
+        if goal is None:
+            return int(np.argmin([d for _, d in frontiers]))
+        dg = self._dist(memory.layout, goal)
+        return int(np.argmin([d + dg[f.cell] for f, d in frontiers]))

@@ -40,7 +40,11 @@ def find(memory: Memory, body: Body, policy: Policy, goal: str, budget_m: float,
         if not fr:
             status = "exhausted"
             break
-        k = policy.choose(memory, body, fr, goal, budget_m - spent())
+        if target is not None:
+            # Seen but no known way there yet: every policy heads for the opening closest to it.
+            k = int(np.argmin([float(np.hypot(*(f.xy - target.xy))) + 0.25 * d for f, d in fr]))
+        else:
+            k = policy.choose(memory, body, fr, goal, budget_m - spent())
         decisions += 1
         res = walk(memory, body, [fr[k][0].cell], start_walked + budget_m,
                    stop_when=lambda: bool(memory.seen_of(goal)))
