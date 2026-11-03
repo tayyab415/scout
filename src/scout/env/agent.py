@@ -63,10 +63,8 @@ class Agent:
         self.best_gd, self.last_progress_t = 1e9, t
 
     def _frontiers(self, xy):
-        wk = self.smap.walkable()
+        wk = self.smap.planning_mask(xy)
         c = self.smap.cell(xy)
-        sl = (slice(max(c[0] - 3, 0), c[0] + 4), slice(max(c[1] - 3, 0), c[1] + 4))
-        wk[sl] |= ~self.smap.inflated()[sl]
         dist = geodesic(wk, [c], self.smap.res)
         fr = [(f, n) for f, n in self.smap.frontiers() if np.isfinite(dist[self.smap.cell(f)])
               and np.linalg.norm(f - xy) > 0.8 and all(np.linalg.norm(f - b) > 1.0 for b in self.banned)]

@@ -119,3 +119,19 @@ def test_quiz_is_graded_against_what_the_camera_showed_not_what_the_house_contai
         c = score_citations(log, mem, ev)
         assert (c["cited"], c["valid"], c["invalid_id"]) == (2, 1, 1)
         assert (c["affirmative"], c["affirmative_supported"]) == (2, 1)
+
+
+def test_body_inside_a_clearance_margin_can_still_plan_out():
+    """Regression (pilot cmp1): after a close inspection the body stood inside an obstacle margin and every path failed."""
+    m = SelfMap(origin=[0, 0], size_m=12)
+    xs, ys = np.meshgrid(np.arange(-3, 3, 0.05), np.arange(-3, 3, 0.05))
+    m.integrate(np.stack([xs.ravel(), ys.ravel(), np.zeros(xs.size)], 1))
+    post = np.stack([np.full(30, 0.2), np.zeros(30), np.linspace(0.3, 1.2, 30)], 1)  # an obstacle 0.2 m from the body
+    m.integrate(np.concatenate([post, post]))
+    m.stand([0, 0])
+    assert m.inflated()[m.cell([0, 0])]
+    p = m.path([0, 0], [-2.0, 0.0], goal_radius=0.2)
+    assert len(p) > 5
+    obstacles = np.array([m.pos(c) for c in np.argwhere(m.blocked)])
+    far = [q for q in p if np.linalg.norm(q) > 0.7]  # beyond the escape zone the clearance holds
+    assert _clearance(m, np.array(far), obstacles) >= BODY_RADIUS - 1e-6

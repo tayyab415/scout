@@ -147,19 +147,38 @@ class SelfMap:
                 out.append((self.pos(rep), len(cells)))
         return out
 
-    def path(self, start_xy, goal_xy, goal_radius: float = 0.3) -> np.ndarray:
-        """Shortest walkable path (world xy points), empty if unreachable on what the body has seen."""
+    def planning_mask(self, start_xy) -> np.ndarray:
+        """Walkable cells for planning from start_xy.
+
+        - Unseen floor within 0.8 m of the body counts as walkable (the head camera cannot see its own feet), but never
+          inside an obstacle's clearance.
+        - If the body already stands inside a clearance margin (after a close inspection), the unblocked cells within
+          0.6 m of it are opened so it can step out. Everywhere else every path cell keeps BODY_RADIUS of clearance."""
         wk = self.walkable()
         s = self.cell(start_xy)
-        # the head camera cannot see the floor right at its feet: treat unblocked cells within 0.8 m as walkable
-        r = int(round(0.8 / self.res))
-        ii, jj = np.mgrid[-r:r + 1, -r:r + 1]
-        near = (ii ** 2 + jj ** 2 <= r * r)
-        a0, b0 = s[0] - r, s[1] - r
-        sl = (slice(max(a0, 0), s[0] + r + 1), slice(max(b0, 0), s[1] + r + 1))
-        sub = near[max(-a0, 0):, max(-b0, 0):][:wk[sl].shape[0], :wk[sl].shape[1]]
-        wk[sl] |= sub & ~self.inflated()[sl]  # unseen near floor, but never inside the clearance of an obstacle
-        wk[s] = True
+        infl = self.inflated()
+        n = wk.shape[0]
+
+        def disc(r_m):
+            r = int(round(r_m / self.res))
+            ii, jj = np.mgrid[-r:r + 1, -r:r + 1]
+            a0, b0 = s[0] - r, s[1] - r
+            sl = (slice(max(a0, 0), min(s[0] + r + 1, n)), slice(max(b0, 0), min(s[1] + r + 1, n)))
+            sub = (ii ** 2 + jj ** 2 <= r * r)[max(-a0, 0):, max(-b0, 0):][:sl[0].stop - sl[0].start, :sl[1].stop - sl[1].start]
+            return sl, sub
+        sl, sub = disc(0.8)
+        wk[sl] |= sub & ~infl[sl]
+        if 0 <= s[0] < n and 0 <= s[1] < n and infl[s]:
+            sl, sub = disc(0.6)
+            wk[sl] |= sub & ~self.blocked[sl]
+        if 0 <= s[0] < n and 0 <= s[1] < n:
+            wk[s] = True
+        return wk
+
+    def path(self, start_xy, goal_xy, goal_radius: float = 0.3) -> np.ndarray:
+        """Shortest walkable path (world xy points), empty if unreachable on what the body has seen."""
+        wk = self.planning_mask(start_xy)
+        s = self.cell(start_xy)
         g = self.cell(goal_xy)
         r = max(int(round(goal_radius / self.res)), 0)
         goals = [(i, j) for i in range(g[0] - r, g[0] + r + 1) for j in range(g[1] - r, g[1] + r + 1)
