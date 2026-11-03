@@ -56,10 +56,13 @@ def _house_spec(root: str, name: str, ceiling: bool):
     xml, cxml, _ = house_files(root, name)
     use_ceiling = ceiling and os.path.exists(cxml)
     spec = _load_spec(cxml if use_ceiling else xml)
-    if use_ceiling:
-        for b in spec.bodies:
-            if (b.name or "").startswith("ceiling_"):
-                for g in b.geoms:
+    for b in spec.bodies:
+        n = b.name or ""
+        # ceilings and walls go in CEILING_GROUP: the head camera still sees them (default groups 0-2), the observer
+        # camera hides that group, so viewers see the body through a cutaway. Physics is unchanged.
+        if (use_ceiling and n.startswith("ceiling_")) or n.startswith("wall_"):
+            for g in b.geoms:
+                if g.group <= 2:
                     g.group = CEILING_GROUP
     return spec
 
