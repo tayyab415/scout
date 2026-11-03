@@ -96,16 +96,22 @@ class SelfMap:
     def seen(self) -> np.ndarray:
         return (self.floor > 0) | self.blocked | self.visited
 
-    def walkable(self) -> np.ndarray:
-        """Seen floor, minus anything within a body radius of an obstacle."""
-        r = int(math.ceil(BODY_RADIUS / self.res))
+    def inflated(self) -> np.ndarray:
+        """Cells whose centre is within BODY_RADIUS + half a cell of an obstacle cell's centre, so every path cell
+        keeps at least BODY_RADIUS from the nearest edge of a blocked cell."""
+        r_m = BODY_RADIUS + self.res / 2
+        r = int(math.ceil(r_m / self.res))
         b = self.blocked
         grown = b.copy()
         for di in range(-r, r + 1):
             for dj in range(-r, r + 1):
-                if di * di + dj * dj <= r * r:
+                if (di * di + dj * dj) * self.res ** 2 <= r_m ** 2 + 1e-9:
                     grown |= np.roll(np.roll(b, di, 0), dj, 1)
-        return ((self.floor > 0) | self.visited) & ~grown
+        return grown
+
+    def walkable(self) -> np.ndarray:
+        """Seen floor, minus anything closer than the body's clearance to an obstacle."""
+        return ((self.floor > 0) | self.visited) & ~self.inflated()
 
     def frontiers(self, min_size: int = 3) -> list[tuple[np.ndarray, int]]:
         """Walkable cells next to never-seen cells, clustered. Returns (centre xy, size) per cluster."""
@@ -152,7 +158,7 @@ class SelfMap:
         a0, b0 = s[0] - r, s[1] - r
         sl = (slice(max(a0, 0), s[0] + r + 1), slice(max(b0, 0), s[1] + r + 1))
         sub = near[max(-a0, 0):, max(-b0, 0):][:wk[sl].shape[0], :wk[sl].shape[1]]
-        wk[sl] |= sub & ~self.blocked[sl]
+        wk[sl] |= sub & ~self.inflated()[sl]  # unseen near floor, but never inside the clearance of an obstacle
         wk[s] = True
         g = self.cell(goal_xy)
         r = max(int(round(goal_radius / self.res)), 0)
