@@ -176,6 +176,7 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
                 # paired baseline: the same brain, same memory, same moment, answering from memory without checking
                 rec = copy.deepcopy(agent)
                 rec.brain.recall = True
+                rec.mode, rec.check = "explore", None  # it answers at once from memory; it is never stepped
                 rec.ask(question)
                 rec._decide(env.t, env.body.xy)
                 recall = [q for q in rec.qa if q["kind"] == "answer"][-1:]
