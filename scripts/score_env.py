@@ -22,16 +22,19 @@ VOL = "tribe-lab-claude"
 
 
 def fetch(tag, root):
-    ls = subprocess.run(["modal", "volume", "ls", VOL, f"/scout/env/{tag}"], capture_output=True, text=True).stdout
-    eps = [ln.strip().split("/")[-1] for ln in ls.splitlines() if ln.strip()]
+    """Copy the small files of every episode of a tag from the Modal volume (machine-readable listing)."""
+    r = subprocess.run(["modal", "volume", "ls", "--json", VOL, f"/scout/env/{tag}"], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SystemExit(f"modal volume ls failed: {r.stderr[:300]}")
+    eps = [os.path.basename(x["filename"].rstrip("/")) for x in json.loads(r.stdout) if x.get("type", "dir") == "dir"]
     for e in eps:
         d = f"{root}/{e}"
         os.makedirs(d, exist_ok=True)
         subprocess.run(["modal", "volume", "get", "--force", VOL, f"/scout/env/{tag}/{e}/manifest.json", f"{d}/manifest.json"],
                        capture_output=True)
         for arm in ("unchanged", "moved", "explore_only"):
+            os.makedirs(f"{d}/{arm}", exist_ok=True)
             for f in ("log.json", "memory.json", "evaluator.json", "maps.npz", "map_meta.json"):
-                os.makedirs(f"{d}/{arm}", exist_ok=True)
                 subprocess.run(["modal", "volume", "get", "--force", VOL, f"/scout/env/{tag}/{e}/{arm}/{f}", f"{d}/{arm}/{f}"],
                                capture_output=True)
             if not os.listdir(f"{d}/{arm}"):
@@ -46,49 +49,64 @@ def main():
     ap.add_argument("--no-fetch", action="store_true")
     a = ap.parse_args()
     root = f"runs/env/{a.tag}"
-    eps = sorted(os.listdir(root)) if a.no_fetch else fetch(a.tag, root)
+    if not a.no_fetch:
+        fetch(a.tag, root)
+    # the frozen plan is the authoritative episode list: every planned episode stays in its brain's denominator
+    plan_file = f"configs/frozen_{a.tag}.json"
+    if os.path.exists(plan_file):
+        plan = json.load(open(plan_file))
+        planned = [(b, h, f"{b}_{h}_s{plan.get('seed', 0)}") for b in plan["brains"] for h in plan["houses"]]
+    else:
+        planned = []
+        for e in sorted(x for x in os.listdir(root) if os.path.isdir(f"{root}/{x}")):
+            planned.append((e.split("_")[0], e.split("_", 1)[1].rsplit("_s", 1)[0], e))
     scores = []
-    for e in eps:
+    for b, h, e in planned:
         d = f"{root}/{e}"
         if not os.path.exists(f"{d}/manifest.json"):
-            scores.append(dict(episode=e, error="no manifest (crashed or still running)"))
+            scores.append(dict(episode=e, plan_brain=b, house=h, error="missing manifest (crashed, still running or never started)"))
             continue
         man = json.load(open(f"{d}/manifest.json"))
         lay = Layout.load(f"{a.layouts}/{man['house']}.npz")
-        scores.append(score_episode(d, lay))
+        sc = score_episode(d, lay)
+        sc["plan_brain"] = b
+        scores.append(sc)
     json.dump(scores, open(f"{root}/scores.json", "w"), indent=1, default=float)
 
     by = defaultdict(list)
     for s in scores:
-        if "brain" in s:
-            by[s["brain"]].append(s)
-    lines = ["| brain | episodes | target frozen | verify unchanged (correct / abstain / wrong) | verify moved (correct / abstain / wrong) | "
-             "quiz accuracy | citations valid | own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+        by[s["plan_brain"]].append(s)
+    lines = ["| brain | episodes planned | completed | target frozen | verify unchanged (correct / abstain / wrong / other) | "
+             "verify moved (correct / abstain / wrong / other) | quiz accuracy (errors) | affirmative answers with valid evidence | "
+             "own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |",
+             "|---|---|---|---|---|---|---|---|---|---|---|"]
     for b, ss in sorted(by.items()):
+        done = [s for s in ss if "error" not in s]
+
         def tally(arm):
             c = defaultdict(int)
-            for s in ss:
+            for s in done:
                 v = s.get(arm, {}).get("verify")
-                if v:
-                    c[v["outcome"]] += 1
-            return f"{c['correct']} / {c['abstain'] + c['no answer']} / {c['wrong']}"
-        quiz = [s["unchanged"]["quiz"]["accuracy"] for s in ss if s.get("unchanged", {}).get("quiz")]
-        cite = [s["unchanged"]["cite"] for s in ss if s.get("unchanged", {}).get("cite")]
-        cv, cn = sum(c["valid"] for c in cite), sum(c["cited"] for c in cite)
+                c[v["outcome"] if v else "not run"] += 1
+            other = sum(v for k, v in c.items() if k not in ("correct", "abstain", "wrong"))
+            return f"{c['correct']} / {c['abstain']} / {c['wrong']} / {other}"
+        quiz = [s["unchanged"]["quiz"] for s in done if s.get("unchanged", {}).get("quiz")]
+        cite = [s["unchanged"]["cite"] for s in done if s.get("unchanged", {}).get("cite")]
         chk = defaultdict(int)
-        for s in ss:
-            for arm in ("unchanged", "moved", "explore_only"):
-                for k, v in s.get(arm, {}).get("checks", {}).items():
-                    chk[k] += v
-        fl = [s[arm]["explore"]["floor_seen"] for s in ss for arm in ("unchanged", "explore_only") if s.get(arm, {}).get("explore")]
-        falls = sum(s.get("unchanged", s.get("explore_only", {})).get("falls", 0) for s in ss)
-        ups = sum(s.get("unchanged", s.get("explore_only", {})).get("got_up", 0) for s in ss)
-        lines.append(f"| {b} | {len(ss)} | {sum(1 for s in ss if s.get('target'))} | {tally('unchanged')} | {tally('moved')} | "
-                     f"{np.mean(quiz):.2f} (n={len(quiz)}) | {cv}/{cn} | {chk['correct']} / {chk['abstain']} / {chk['wrong']} | "
-                     f"{np.median(fl) if fl else float('nan'):.0%} | {falls} / {ups} |")
+        for s in done:  # the exploration prefix is shared by both arms: count own checks once, from the unchanged arm
+            arm = "unchanged" if "unchanged" in s else "explore_only"
+            for k, v in s.get(arm, {}).get("checks", {}).items():
+                chk[k] += v
+        fl = [s[arm]["explore"]["floor_seen"] for s in done for arm in ("unchanged", "explore_only") if s.get(arm, {}).get("explore")]
+        falls = sum(s.get("unchanged", s.get("explore_only", {})).get("falls", 0) for s in done)
+        ups = sum(s.get("unchanged", s.get("explore_only", {})).get("got_up", 0) for s in done)
+        qa = f"{np.mean([q['accuracy'] for q in quiz]):.2f} ({sum(q['errors'] for q in quiz)})" if quiz else "-"
+        ev = f"{sum(c['affirmative_supported'] for c in cite)}/{sum(c['affirmative'] for c in cite)}" if cite else "-"
+        lines.append(f"| {b} | {len(ss)} | {len(done)} | {sum(1 for s in done if s.get('target'))} | {tally('unchanged')} | "
+                     f"{tally('moved')} | {qa} | {ev} | {chk['correct']} / {chk['abstain']} / {chk['wrong']} | "
+                     f"{(str(round(100 * float(np.median(fl)))) + '%') if fl else '-'} | {falls} / {ups} |")
     errs = [s for s in scores if "error" in s]
-    md = "\n".join(lines) + ("\n\nNot scored: " + ", ".join(f"{s['episode']} ({s['error']})" for s in errs) if errs else "")
+    md = "\n".join(lines) + ("\n\nNot completed: " + ", ".join(f"{s['episode']} ({s['error']})" for s in errs) if errs else "")
     open(f"{root}/leaderboard.md", "w").write(md + "\n")
     print(md)
 

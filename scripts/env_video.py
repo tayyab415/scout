@@ -22,6 +22,16 @@ def font(size):
     return ImageFont.truetype(FONT, size) if FONT else ImageFont.load_default()
 
 
+def _confident(ss) -> bool:
+    """Same rule as memory (Track.confident), using only the sightings available at that time."""
+    if len(ss) < 3:
+        return False
+    views = np.array([s["body_xy"] for s in ss], float)
+    pos = np.array([s["xyz"][:2] for s in ss], float)
+    spread = float(np.linalg.norm(pos - np.median(pos, 0), axis=1).mean())
+    return float(np.linalg.norm(views.max(0) - views.min(0))) >= 1.0 and spread < 0.5
+
+
 class State:
     """What the agent knew at time t, rebuilt from its own logs."""
 
@@ -37,9 +47,10 @@ class State:
             if e["kind"] == "check_result" and e.get("status") in ("retracted", "gone"):
                 self.status_t[e["track"]] = (e["t"], e["status"])
 
-    def head_frame(self, t: float) -> int:
+    def head_frame(self, t: float):
+        """The latest head frame captured at or before t, or None before the first capture."""
         i = int(np.searchsorted(self.look_t, t + 1e-9, side="right") - 1)
-        return self.looks[max(i, 0)]["frame"]
+        return self.looks[i]["frame"] if i >= 0 else None
 
     def boxes_for_frame(self, frame: int) -> list:
         lk = self.looks[frame]
@@ -54,7 +65,7 @@ class State:
             st = self.status_t.get(tr["id"])
             if st and st[0] <= t:
                 continue  # retracted or found gone by then
-            if confident_only and len(ss) < 3:
+            if confident_only and not _confident(ss):
                 continue
             out.append((tr["label"], list(ss[-1]["xyz"][:2])))
         return out
@@ -131,7 +142,9 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
     meta = json.load(open(f"{adir}/map_meta.json"))
     man = json.load(open(f"{run_dir}/manifest.json"))
     times = st.log["observer_times_prefix"] + st.log["observer_times"]
-    readers = [imageio.get_reader(f"{run_dir}/observer_prefix.mp4"), imageio.get_reader(f"{run_dir}/observer_{arm}.mp4")]
+    readers = [imageio.get_reader(f"{run_dir}/observer_prefix.mp4")]
+    if os.path.exists(f"{run_dir}/observer_{arm}.mp4"):
+        readers.append(imageio.get_reader(f"{run_dir}/observer_{arm}.mp4"))
     frames = (fr for r in readers for fr in r)
     w = imageio.get_writer(out, fps=15, codec="libx264", quality=8, macro_block_size=1)
     big, mid, small = font(26), font(20), font(16)
@@ -144,9 +157,13 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         obs = Image.fromarray(fr).resize((640, 480))
         canvas.paste(obs, (0, 40))
         fi = st.head_frame(t)
-        head = Image.open(f"{adir}/frames/{fi:04d}.jpg").convert("RGB")
+        if fi is None:
+            head = Image.new("RGB", (512, 512), (30, 30, 34))
+            ImageDraw.Draw(head).text((150, 240), "no head image yet", fill=(160, 160, 160), font=mid)
+        else:
+            head = Image.open(f"{adir}/frames/{fi:04d}.jpg").convert("RGB")
         hd = ImageDraw.Draw(head)
-        for b in st.boxes_for_frame(fi):
+        for b in (st.boxes_for_frame(fi) if fi is not None else []):
             x0, y0, x1, y1 = b["box"]
             hd.rectangle([x0, y0, x1, y1], outline=(255, 220, 0), width=4)
             hd.text((x0 + 4, max(y0 - 22, 0)), f"{b['label']} {b['score']:.2f}", fill=(255, 220, 0), font=font(20))

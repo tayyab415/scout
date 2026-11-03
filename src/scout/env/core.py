@@ -137,6 +137,11 @@ class ScoutEnv:
         return self.k / 30.0
 
     def reset(self, start_xy=None, start_yaw=None):
+        """New episode: the house goes back to its original object positions and intervention records are cleared."""
+        if not hasattr(self, "_body_pos0"):
+            self._body_pos0 = self.M.body_pos.copy()
+        self.M.body_pos[:] = self._body_pos0
+        self.moves = []
         rng = np.random.default_rng(self.seed)
         cells = np.argwhere(self.layout.grid.free)
         xy = self.layout.grid.pos(cells[rng.integers(len(cells))]) if start_xy is None else np.asarray(start_xy, float)
