@@ -46,9 +46,30 @@ Fixes, after which these 8 houses count as development houses:
 Development check after the fixes (`dev3`, the same failure houses): val_749 and val_631 now answer correctly in
 both arms. val_227 then exposed the trail-trapping case, which was fixed and is being rechecked (`dev4`).
 
-## Final evaluation: `final2` (8 brand-new houses × 4 brains, 32 episodes)
+## `final2` (stopped after 9 of 32 episodes)
 
-Results are added here when the run finishes. Houses: `configs/final2_houses.json`, never used before.
+Two flaws found during the run and in the development checks. The run was stopped so they did not reach a final
+evaluation. Its houses now count as development houses.
+
+- **Identity.** The target was one of several dining chairs. In the moved arm a neighbouring chair within 1.5 m
+  counted as "still there" (dev4, val_227). Fixes:
+  - a hit needs a same-category detection within 0.6 m of the remembered spot, or a same-category box over the
+    remembered pixel while depth shows something at the remembered distance;
+  - the evaluator only freezes targets with no other instance of their category within 2.5 m.
+- **Reach.** Terra's questions often named an object seen through a doorway in an unmapped area: unreachable in
+  4 of its 7 finished episodes. Fix: walk to the reachable cell nearest the object, then search for a viewpoint
+  again.
+- **After the fixes (dev5, the same failure houses):**
+  - val_227: unchanged correct, moved abstains (it was wrong before);
+  - val_105 and val_726: both arms abstain. In val_726 something still stands at the TV's spot after the move,
+    probably its stand, and the answer says so.
+
+  The check now prefers abstaining to guessing.
+
+## Final evaluation: `final3` (8 brand-new houses × 4 brains, 32 episodes)
+
+Results are added here when the run finishes. Houses: `configs/final3_houses.json`; 52 houses were excluded as
+used before.
 
 ## Branch replay
 
