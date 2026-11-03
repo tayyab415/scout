@@ -82,6 +82,8 @@ class Episodic:
             if tr.status != "ok":
                 continue
             p = self.sightings[tr.sightings[-1]].xyz
+            if not np.isfinite(p).all():
+                continue
             pc = R.T @ (p - np.asarray(cam_pos))
             if pc[2] >= -0.3:
                 continue
