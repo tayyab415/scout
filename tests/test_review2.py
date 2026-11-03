@@ -174,11 +174,11 @@ def test_tick_advances_once_behaviorally(fallen):
 
 def run_runner_loop(fallen=True):
     """Execute the actual nested run_until AST without importing Modal or credentials."""
-    tree = ast.parse((ROOT / "scripts/modal_env.py").read_text())
+    tree = ast.parse((ROOT / "src/scout/env/episode.py").read_text())
     node = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "run_until")
     env, agent = ClockEnv(fallen), clock_agent()
     namespace = dict(env=env, agent=agent, vis=[], maps=[], LOOK_EVERY=15, np=np)
-    exec(compile(ast.Module(body=[node], type_ignores=[]), str(ROOT / "scripts/modal_env.py"), "exec"), namespace)
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(ROOT / "src/scout/env/episode.py"), "exec"), namespace)
     namespace["run_until"](3., NS(append_data=lambda frame: None), [])
     return namespace
 
