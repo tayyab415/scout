@@ -1,0 +1,19 @@
+{
+ "houses": [
+  "procthor-10k-val_val_271",
+  "procthor-10k-val_val_126",
+  "procthor-10k-val_val_552",
+  "procthor-10k-val_val_689",
+  "procthor-10k-val_val_123",
+  "procthor-10k-val_val_659"
+ ],
+ "brains": [
+  "spark",
+  "llama4",
+  "rules",
+  "random"
+ ],
+ "explore_s": 240.0,
+ "seed": 0,
+ "tag": "cmp1"
+}
