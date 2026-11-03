@@ -267,7 +267,8 @@ def compare(houses_file: str = "leaderboard_houses.json", brains: str = "spark,l
 
 render_image = (modal.Image.debian_slim(python_version="3.12").apt_install("ffmpeg", "fonts-dejavu-core")
                 .pip_install("imageio[ffmpeg]", "pillow", "numpy")
-                .add_local_file(os.path.join(os.path.dirname(__file__), "env_video.py"), "/scripts/env_video.py"))
+                .add_local_file(os.path.join(os.path.dirname(__file__), "env_video.py"), "/scripts/env_video.py")
+                .add_local_file(os.path.join(os.path.dirname(__file__), "demo_cut.py"), "/scripts/demo_cut.py"))
 
 
 @app.function(image=render_image, volumes={"/data": vol}, cpu=4, memory=16384, timeout=3600)
@@ -403,3 +404,21 @@ def check_evidence(tag: str) -> list:
 def evidence(tag: str = "final"):
     for r in check_evidence.remote(tag):
         print(r)
+
+
+@app.function(image=render_image, volumes={"/data": vol}, cpu=4, memory=16384, timeout=3600)
+def demo_remote(tag: str, episode: str) -> str:
+    import sys
+    sys.path.insert(0, "/scripts")
+    import demo_cut
+    d = f"/data/scout/env/{tag}/{episode}"
+    out = f"/data/scout/env/{tag}/demo_{episode}.mp4"
+    sys.argv = ["demo_cut.py", "--episode", d, "--leaderboard", f"/data/scout/env/{tag}/leaderboard.md", "--out", out]
+    demo_cut.main()
+    vol.commit()
+    return out
+
+
+@app.local_entrypoint()
+def demo(tag: str = "final2", episode: str = ""):
+    print(demo_remote.remote(tag, episode))

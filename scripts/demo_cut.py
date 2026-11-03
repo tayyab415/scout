@@ -1,0 +1,114 @@
+"""Assemble the demo video from one recorded episode and a leaderboard. Every frame comes from a real recording.
+
+    python scripts/demo_cut.py --episode <dir with unchanged.mp4, moved.mp4, manifest.json> --leaderboard leaderboard.md --out demo.mp4
+
+Sections (about 3 minutes; the narrator records the voice over it, see docs/demo_script.md):
+  0:00  the moved arm's evidence card (what it remembered | what it found when it went back), as the hook
+  0:12  title card
+  0:18  exploration, the three-panel view (unchanged arm, sped up 3x)
+  ~1:05 the evaluator's hidden move and the question, then the walk back and the look (moved arm, real time)
+  ~1:50 both evidence cards: memory-persistence answer vs checked answer, moved and unchanged
+  ~2:25 leaderboard card
+  ~2:45 disclosure card
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import textwrap
+
+import imageio.v2 as imageio
+import numpy as np
+from PIL import Image, ImageDraw
+
+W, H, FPS = 1280, 720, 15
+FONT = next((p for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf")
+             if os.path.exists(p)), None)
+
+
+def font(size):
+    from PIL import ImageFont
+    return ImageFont.truetype(FONT, size) if FONT else ImageFont.load_default()
+
+
+def card(lines, sizes=None, colors=None):
+    im = Image.new("RGB", (W, H), (14, 14, 18))
+    dr = ImageDraw.Draw(im)
+    y = 120
+    for k, ln in enumerate(lines):
+        sz = (sizes or [34] * len(lines))[k]
+        col = (colors or [(235, 235, 235)] * len(lines))[k]
+        for wl in textwrap.wrap(ln, int(1900 / sz)) or [""]:
+            dr.text((80, y), wl, fill=col, font=font(sz))
+            y += int(sz * 1.35)
+        y += 10
+    return np.asarray(im)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--episode", required=True)
+    ap.add_argument("--leaderboard", required=True)
+    ap.add_argument("--out", required=True)
+    a = ap.parse_args()
+    man = json.load(open(f"{a.episode}/manifest.json"))
+    card_len = FPS * 6  # env_video appends each evidence card for 6 s at the end of an arm video
+    rm, ru = imageio.get_reader(f"{a.episode}/moved.mp4"), imageio.get_reader(f"{a.episode}/unchanged.mp4")
+    nm, nu = rm.count_frames(), ru.count_frames()
+    mv_card, un_card = rm.get_data(nm - card_len // 2), ru.get_data(nu - card_len // 2)
+    n_prefix = int(man["explore_s"] * FPS)  # observer frames: 15 per simulated second
+    w = imageio.get_writer(a.out, fps=FPS, codec="libx264", quality=8, macro_block_size=1)
+
+    def put(img, secs=None, n=None):
+        for _ in range(n if n is not None else int(secs * FPS)):
+            w.append_data(img)
+
+    put(mv_card, 12)
+    tgt = man.get("target") or {}
+    put(card(["Scout", "Can a robot tell what it knows from what it needs to check?",
+              "A physics-simulated humanoid (Meta Motivo) in a home it has never seen. Eyes: SAM 3.1. Brain: plug in yours.",
+              f"House {man['house']}  |  brain: {man['brain']}"], [64, 34, 26, 22],
+             [(255, 210, 90), (235, 235, 235), (200, 200, 200), (150, 150, 150)]), 6)
+    for i, f in enumerate(ru):      # exploration (shared by both arms), 3x
+        if i >= n_prefix:
+            break
+        if i % 3 == 0:
+            w.append_data(f)
+    for i, f in enumerate(rm):      # the hidden move, the question, the walk back, the look: real time
+        if i >= nm - card_len:
+            break
+        if i >= n_prefix:
+            w.append_data(f)
+    put(mv_card, 10)
+    put(un_card, 10)
+    rows = [ln for ln in open(a.leaderboard).read().splitlines() if ln.startswith("| ") and "---" not in ln][:5]
+    cols = [c.strip() for c in rows[0].strip("|").split("|")]
+    keep = [i for i, c in enumerate(cols) if c.startswith(("brain", "episodes planned", "verify unchanged", "verify moved",
+                                                             "memory-persistence", "quiz accuracy", "affirmative", "falls"))]
+    im = Image.new("RGB", (W, H), (14, 14, 18))
+    dr = ImageDraw.Draw(im)
+    dr.text((40, 30), "Leaderboard: unseen homes, same body, same eyes, same budgets", fill=(255, 210, 90), font=font(30))
+    xs = np.linspace(40, W - 140, len(keep)).astype(int)
+    for r, row in enumerate(rows):
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        for x, i in zip(xs, keep):
+            txt = cells[i] if i < len(cells) else ""
+            for k, ln in enumerate(textwrap.wrap(txt, 16 if r == 0 else 22)[:3]):
+                dr.text((x, 110 + r * 100 + k * 22), ln, fill=(255, 255, 255) if r else (170, 170, 170), font=font(18 if r else 15))
+    dr.text((40, 640), "verify columns: correct / abstain / wrong / other.  Full outcome breakdown and every failure: docs/results/",
+            fill=(150, 150, 150), font=font(16))
+    put(np.asarray(im), 20)
+    put(card(["What is real and what is given",
+              "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
+              "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
+              "'Not found' means the depth camera now sees past the remembered spot. It never claims to have seen the move.",
+              "Muse Spark 1.3 stands in for Muse Spark until the Meta Model API key is available.",
+              "The memory-persistence answer is a rule: whatever memory says, without looking."],
+             [34, 22, 22, 22, 22, 22]), 15)
+    w.close()
+    print("wrote", a.out)
+
+
+if __name__ == "__main__":
+    main()
