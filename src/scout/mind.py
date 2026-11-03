@@ -23,8 +23,8 @@ When to check:
 - An object was seen only once or with low confidence (below 0.8). It may be a misrecognition, so a second look
   confirms it.
 - An object was NOT seen where you remembered it. Go back and look properly before believing it moved.
-- Exploration is finished (no unexplored openings left). Keep your memory fresh: check the object you have not
-  seen for the longest time, or one you are unsure about.
+- Exploration is finished (no unexplored openings left). Keep your memory fresh: check the first object in the
+  list "confident objects not seen for the longest", unless something was just found missing.
 An object seen only once is tentative. Lines saying "probably a misrecognition" or "found it gone" are settled;
 do not check those again.
 
