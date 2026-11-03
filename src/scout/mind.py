@@ -53,3 +53,47 @@ def ask_mind(table: str, state: str, region: str = "us-east-1", retries: int = 2
                 return {"do": "explore", "why": f"(mind unavailable: {type(e).__name__})"}, time.time() - t0
             time.sleep(2)
     return {"do": "explore"}, time.time() - t0
+
+
+QUESTION_SYSTEM = """You are the memory of a humanoid body that has explored a house on its own. Someone now asks you
+a question about something you saw. Use ONLY the memory table (objects your head camera recognised, with times in
+seconds since you woke up, positions on your own map, and whether each is confident or tentative).
+
+Pick the remembered object the question is about. If several match, prefer a confident one, then the most recent.
+Then say what you knew before checking, in one short first-person sentence with the time you last saw it, and that
+you will go and look. If nothing in memory matches, say you never saw one.
+Reply with JSON only: {"object_id": N or null, "say": "..."}"""
+
+ANSWER_SYSTEM = """You are a humanoid body that just walked back to check something you remembered, because someone
+asked. You are given the question, what you remembered, and what the check found. Answer in one or two short
+first-person sentences. Separate what you knew before from what you see now. Be precise about evidence:
+- "still there": say you just saw it there again.
+- "not found": say you could not find it where you last saw it (do NOT claim it was moved or taken; you did not see that).
+- "unclear": say you could not get a clear look.
+- "found elsewhere": say where you saw one now; say you cannot be sure it is the same one unless the memory shows
+  the old place empty AND only one such object was ever seen.
+Reply with JSON only: {"say": "..."}"""
+
+
+def _converse(system: str, msg: str, region: str = "us-east-1") -> dict:
+    import boto3
+    c = boto3.client("bedrock-runtime", region_name=region)
+    for k in range(3):
+        try:
+            r = c.converse(modelId=MODEL, system=[{"text": system}], messages=[{"role": "user", "content": [{"text": msg}]}],
+                           inferenceConfig={"maxTokens": 3000})
+            text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
+            m = re.search(r"\{.*\}", text, re.S)
+            return json.loads(m.group(0)) if m else {"say": text}
+        except Exception:
+            time.sleep(2)
+    return {}
+
+
+def resolve_question(table: str, question: str) -> dict:
+    return _converse(QUESTION_SYSTEM, f"Memory:\n{table}\n\nQuestion: {question}")
+
+
+def phrase_answer(question: str, remembered: str, finding: str) -> str:
+    d = _converse(ANSWER_SYSTEM, f"Question: {question}\nWhat I remembered: {remembered}\nWhat the check found: {finding}")
+    return d.get("say", finding)

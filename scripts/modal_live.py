@@ -63,7 +63,7 @@ MIX_LEFT = ([-18, 12, 71, 119], [0.0, 0.25, 0.5, 0.75])
 MIX_RIGHT = ([18, 33, 85, 122], [0.0, 0.25, 0.5, 0.75])
 
 
-def move_object(mujoco, body, mem, lay, rng, t, in_view=()):
+def move_object(mujoco, body, mem, lay, rng, t, in_view=(), only_label=""):
     """Evaluator: pick a remembered movable object that is >= 5 m from the body, move it to another room.
 
     Returns a record of the move (kept out of the body's log), or None if no candidate yet."""
@@ -71,7 +71,7 @@ def move_object(mujoco, body, mem, lay, rng, t, in_view=()):
     M, D = body.M, body.D
     names = [mujoco.mj_id2name(M, mujoco.mjtObj.mjOBJ_BODY, b) or "" for b in range(M.nbody)]
     for tr in sorted(mem.tracks, key=lambda tr: -len(tr.sightings)):
-        if tr.label not in MOVABLE or len(tr.sightings) < 2:
+        if tr.label not in MOVABLE or len(tr.sightings) < 2 or (only_label and tr.label != only_label):
             continue
         xy = tr.last_xy(mem)
         if np.linalg.norm(xy - body.xy) < 6.0 or tr in in_view:
@@ -109,7 +109,8 @@ def move_object(mujoco, body, mem, lay, rng, t, in_view=()):
 
 @app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=5400, secrets=secrets)
 def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "", mind: bool = False,
-             mind_every: float = 20.0, move_at: float = -1.0):
+             mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
+             question: str = "", find: bool = False):
     import io
     import json
     import math
@@ -124,7 +125,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     from scout.body.follow import lookahead, wrap_deg
     from scout.body.motivo import MotivoBody
     from scout.memory.episodic import Episodic
-    from scout.mind import ask_mind
+    from scout.mind import ask_mind, phrase_answer, resolve_question
     from scout.perception.sam import Sam31
     from scout.perception.selfmap import SelfMap, depth_to_points
     from scout.world.grid import descend, geodesic
@@ -162,6 +163,19 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
 
     smap = SelfMap(origin=body.xy, size_m=40)
     miss_run = {}
+    qa, qa_state, q_track, check_frames, search_q = [], "", None, [], []
+
+    def viewpoint_path(obj):
+        """Path to a spot 2.5 m from obj on the near side, so it arrives facing the object."""
+        away = body.xy - obj
+        base = math.atan2(away[1], away[0])
+        for dang in (0, 0.6, -0.6, 1.2, -1.2, 2.0, -2.0):
+            for rr in (2.5, 2.0, 3.0):
+                v = obj + rr * np.array([math.cos(base + dang), math.sin(base + dang)])
+                p = smap.path(body.xy, v, goal_radius=0.4)
+                if len(p) >= 2:
+                    return p
+        return np.zeros((0, 2))
     mode, check_tid, check_t0, arrived_t, last_check_tid = "explore", None, 0.0, None, None
     next_mind_t, mind_due, decisions, evaluator, all_done = (mind_every if mind else 1e9), False, [], [], False
     import mujoco
@@ -194,11 +208,19 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                     for score, m in insts:
                         if score < 0.5 or m.sum() < 30:
                             continue
-                        vs, us = np.nonzero(m)
+                        # place it on its own surface: shrink the mask away from its edges (they bleed into the
+                        # wall or floor behind), then keep depths near the object's front surface
+                        from scipy.ndimage import binary_erosion
+                        core = binary_erosion(m, iterations=4)
+                        if core.sum() < 20:
+                            core = m
+                        vs, us = np.nonzero(core)
                         dvals = depth[vs, us]
                         ok = (dvals > 0.1) & (dvals < 8)
                         if ok.sum() < 10:
                             continue
+                        front = np.percentile(dvals[ok], 30)
+                        ok &= np.abs(dvals - front) < 0.4
                         h = depth.shape[0]
                         f = (h / 2) / math.tan(math.radians(FOVY) / 2)
                         x = (us[ok] + 0.5 - h / 2) / f * dvals[ok]
@@ -229,6 +251,20 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         tr.misses.append((t, frame_id))
                         events.append(dict(t=t, kind="expected_not_seen", label=tr.label, track=tr.id, frame=frame_id))
                         mind_due = mind_due or mind
+                if qa_state == "search":
+                    lab = mem.tracks[q_track].label
+                    for d in look["dets"]:
+                        sx = mem.sightings[d["sighting"]]
+                        if d["label"] == lab and np.linalg.norm(sx.xyz[:2] - check_xy) > 3.0:
+                            others = [tr for tr in mem.tracks if tr.label == lab and tr.status == "ok"]
+                            finding = (f"found elsewhere: a {lab} at x={sx.xyz[0]:.1f}, y={sx.xyz[1]:.1f} (t={t:.0f}s); "
+                                       f"the old place was checked and it was not there; {len(others)} {lab} objects in memory")
+                            say = phrase_answer("Then find it.", f"a {lab} last seen at its old place", finding)
+                            qa.append(dict(t=t, kind="answer", result="found elsewhere", say=say, now_frames=[frame_id],
+                                           sighting=sx.id))
+                            events.append(dict(t=t, kind="answer", say=say))
+                            qa_state, goal, path = "done", None, np.zeros((0, 2))
+                            break
                 if mode == "check" and arrived_t is not None:
                     trc = mem.tracks[check_tid]
                     uv = next((uv for tr, uv in mem.expected_in_view(cp, cm, FOVY, depth, max_range=5.0) if tr is trc), None)
@@ -237,6 +273,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         for d in look["dets"])
                     check_views += int(uv is not None)
                     check_hits += int(hit)
+                    check_frames.append(frame_id)
                 head_w.append_data(rgb)
             looks.append(look)
             if k % 30 == 0:
@@ -245,7 +282,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             # evaluator only: move one remembered object to another room while the body is far away (disclosed)
             if move_at >= 0 and t >= move_at and not evaluator:
                 vis = [tr for tr, _ in mem.expected_in_view(cp, cm, FOVY, depth, max_range=12.0)]
-                evaluator.append(move_object(mujoco, body, mem, lay, rng, t, vis))
+                evaluator.append(move_object(mujoco, body, mem, lay, rng, t, vis, move_label))
                 if evaluator[-1] is None:
                     evaluator.clear()
                     move_at = t + 10.0
@@ -264,10 +301,32 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                 dist = geodesic(wk, [c], smap.res)
                 return wk, c, dist, [(f, n) for f, n in smap.frontiers() if np.isfinite(dist[smap.cell(f)]) and np.linalg.norm(f - body.xy) > 0.8]
 
+            # a person asks a question about its memory (after it explored on its own): it goes and checks
+            if ask_at >= 0 and t >= ask_at and not qa_state and mode != "check":
+                res_q = resolve_question(mem.table(), question)
+                tid = res_q.get("object_id")
+                qa.append(dict(t=t, kind="question", text=question, say=res_q.get("say", ""), object_id=tid))
+                events.append(dict(t=t, kind="question", text=question, say=res_q.get("say", "")))
+                qa_state = "asked"
+                if isinstance(tid, int) and 0 <= tid < len(mem.tracks):
+                    obj = mem.tracks[tid].last_xy(mem)
+                    p = viewpoint_path(obj)
+                    if len(p) >= 2:
+                        mode, check_tid, check_t0, arrived_t = "check", tid, t, None
+                        check_xy, check_views, check_hits, check_frames = obj.copy(), 0, 0, []
+                        goal, path, prog = p[-1], p, 0
+                        q_track = tid
+                        events.append(dict(t=t, kind="check_start", track=tid, label=mem.tracks[tid].label, why="asked"))
+                    else:
+                        qa.append(dict(t=t, kind="answer", say="I can't find a way back to where I saw it."))
+                        qa_state = "done"
+                else:
+                    qa_state = "done"
+
             # the mind (language model) decides: keep exploring, or go back and check a remembered object
-            if mind and mode == "explore" and (t >= next_mind_t or mind_due) and mem.tracks:
+            if mind and mode == "explore" and not qa_state and (t >= next_mind_t or mind_due) and mem.tracks:
                 wk, c, dist, frs = reachable_frontiers()
-                stale = sorted([tr for tr in mem.tracks if tr.status == "ok" and len(tr.sightings) >= 3
+                stale = sorted([tr for tr in mem.tracks if tr.status == "ok" and tr.confident(mem)
                                 and checks_done.get(tr.id, 0) < 2],
                                key=lambda tr: mem.sightings[tr.sightings[-1]].t)[:5]
                 state = (f"time {t:.0f} s; position x={body.xy[0]:.1f} y={body.xy[1]:.1f}; unexplored openings reachable: {len(frs)}; "
@@ -287,20 +346,10 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         and checks_done.get(tid, 0) < 2:
                     checks_done[tid] = checks_done.get(tid, 0) + 1
                     obj = mem.tracks[tid].last_xy(mem)
-                    p = np.zeros((0, 2))
-                    away = body.xy - obj
-                    base = math.atan2(away[1], away[0])
-                    for dang in (0, 0.6, -0.6, 1.2, -1.2, 2.0, -2.0):  # stand 2.5 m off, facing it; nearest side first
-                        for rr in (2.5, 2.0, 3.0):
-                            v = obj + rr * np.array([math.cos(base + dang), math.sin(base + dang)])
-                            p = smap.path(body.xy, v, goal_radius=0.4)
-                            if len(p) >= 2:
-                                break
-                        if len(p) >= 2:
-                            break
+                    p = viewpoint_path(obj)
                     if len(p) >= 2:
                         mode, check_tid, check_t0, arrived_t = "check", tid, t, None
-                        check_xy, check_views, check_hits = obj.copy(), 0, 0
+                        check_xy, check_views, check_hits, check_frames = obj.copy(), 0, 0, []
                         goal, path, prog = p[-1], p, 0
                         n_before = len(mem.tracks[tid].sightings)
                         events.append(dict(t=t, kind="check_start", track=tid, label=mem.tracks[tid].label, why=dec.get("why", "")))
@@ -323,8 +372,39 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         res = "could not tell"
                     events.append(dict(t=t, kind="check_result", track=check_tid, label=tr.label, result=res,
                                        status=tr.status, looks_in_view=check_views, hits=check_hits))
+                    if qa_state == "asked" and check_tid == q_track:
+                        ss0 = mem.sightings[[i for i in tr.sightings if mem.sightings[i].t <= check_t0][-1]]
+                        remembered = f"a {tr.label} seen {len(tr.sightings)} times, last at t={ss0.t:.0f}s (frame {ss0.frame})"
+                        finding = {"still there": "still there", "not there": "not found", "could not tell": "unclear"}[res]
+                        say = phrase_answer(question, remembered, finding)
+                        qa.append(dict(t=t, kind="answer", result=finding, say=say, before_frame=ss0.frame,
+                                       now_frames=check_frames[-3:]))
+                        events.append(dict(t=t, kind="answer", say=say))
+                        qa_state = "search" if (find and finding == "not found") else "done"
+                        if qa_state == "search":
+                            search_q = sorted({tuple(np.round(np.array(lk["xy"]) / 2.5).astype(int)) for lk in looks})
+                            search_q = [np.array(c) * 2.5 for c in search_q if np.linalg.norm(np.array(c) * 2.5 - check_xy) > 3.0]
+                            qa.append(dict(t=t, kind="question", text="Then find it."))
+                            events.append(dict(t=t, kind="search_start", label=tr.label))
                     last_check_tid, mode, check_tid, arrived_t, goal = check_tid, "explore", None, None, None
                     mind_due = mind_due or (mind and (res == "not there" or all_done))
+            elif qa_state == "search":
+                # look for it: walk to the places it has been (2.5 m grid of its own trail), nearest first
+                if goal is None or np.linalg.norm(body.xy - goal) < 0.8 or stuck:
+                    while search_q:
+                        nxt = min(search_q, key=lambda q: np.linalg.norm(q - body.xy))
+                        search_q = [q for q in search_q if q is not nxt]
+                        p = smap.path(body.xy, nxt, goal_radius=0.6)
+                        if len(p) >= 2:
+                            goal, path, prog, best_gd, last_move_t = p[-1], p, 0, 1e9, t
+                            break
+                    else:
+                        qa.append(dict(t=t, kind="answer", result="not found anywhere",
+                                       say="I walked through the places I know and did not see one."))
+                        events.append(dict(t=t, kind="answer", say=qa[-1]["say"]))
+                        qa_state, goal, path = "done", None, np.zeros((0, 2))
+            elif qa_state == "done" and ask_at >= 0:
+                goal, path = None, np.zeros((0, 2))
             elif goal is None or (np.linalg.norm(body.xy - goal) < 0.6) or stuck:
                 # explore: the nearest reachable frontier (fixed rule, no language model)
                 if stuck and goal is not None:
@@ -354,8 +434,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             rel = wrap_deg(math.degrees(math.atan2(d[1], d[0]) - body.yaw)) if np.linalg.norm(d) > 0.05 else 0.0
             zt = target_z(rel)
             last_rel = rel
-        elif mode == "check":
-            zt = Z["move-ego-0-0"]  # arrived: stand and look
+        elif mode == "check" or qa_state == "done":
+            zt = Z["move-ego-0-0"]  # arrived (or finished answering): stand and look
         else:
             zt = Z["yaw-L-2-free"] if "yaw-L-2-free" in Z else Z["move-ego-0-0"]  # nothing left to explore: look around
         z = z + (zt - z) / 15.0 * 2.0
@@ -413,7 +493,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                    start=start.tolist(), events=events, looks=looks, prompts=PROMPTS,
                    perception="RGB-D head camera, SAM 3.1 open weights; perfect odometry from the simulator",
                    explorer="nearest reachable frontier on the self-built map (rule, no language model)",
-                   mind=("GPT-6.1 Terra (Bedrock) as stand-in for Muse Spark" if mind else "off"), decisions=decisions),
+                   mind=("GPT-6.1 Terra (Bedrock) as stand-in for Muse Spark" if mind else "off"), decisions=decisions,
+                   qa=qa),
               open(f"{out}/log.json", "w"))
     truth = dict(objects=[dict(type=o.type, xy=np.asarray(o.xy).tolist(), room=o.room) for o in lay.objects],
                  rooms=[dict(id=r.id, type=r.type) for r in lay.rooms], evaluator_events=evaluator)
@@ -425,15 +506,16 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                    walked_waypoints=sum(e["kind"] == "new_waypoint" for e in events),
                    stuck=sum(e["kind"] == "stuck" for e in events), minutes=round((time.time() - t0) / 60, 1),
                    mind_calls=len(decisions), checks=[{k: e[k] for k in ("t", "label", "result", "status")} for e in events if e["kind"] == "check_result"],
-                   evaluator=evaluator)
+                   evaluator=evaluator, qa=[{k: v for k, v in q.items() if k in ("t", "kind", "text", "say", "result")} for q in qa])
     log(summary)
     return summary
 
 
 @app.local_entrypoint()
 def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: int = 0, run_name: str = "",
-         mind: bool = False, mind_every: float = 20.0, move_at: float = -1.0):
-    print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at))
+         mind: bool = False, mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
+         question: str = "", find: bool = False):
+    print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at, move_label, ask_at, question, find))
 
 
 @app.local_entrypoint()

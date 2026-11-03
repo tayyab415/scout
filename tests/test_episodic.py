@@ -23,3 +23,12 @@ def test_expected_in_view_respects_occlusion():
     assert len(m.expected_in_view([0, 0, 1.5], R, 75, depth)) == 1
     depth[:] = 1.0  # a wall at 1 m hides it
     assert len(m.expected_in_view([0, 0, 1.5], R, 75, depth)) == 0
+
+
+def test_confident_needs_two_viewpoints_and_consistency():
+    m = Episodic()
+    for k in range(3):
+        _, tr, _ = m.add("sofa", 0.9, [5, 5, 0.5], k, k, [0, 0])
+    assert not tr.confident(m)  # same viewpoint three times
+    m.add("sofa", 0.9, [5.1, 5, 0.5], 4, 4, [2, 0])
+    assert tr.confident(m)
