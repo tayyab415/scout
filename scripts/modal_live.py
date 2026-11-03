@@ -172,6 +172,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     z = Z["move-ego-0-0"].clone()
     path, prog, goal = np.zeros((0, 2)), 0, None
     last_xy, last_move_t, fell, falls, best_gd, banned, checks_done = body.xy, 0.0, False, 0, 1e9, [], {}
+    last_rel = None
     n_steps = int(seconds * 30)
     for k in range(n_steps):
         t = k / 30.0
@@ -184,7 +185,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             frame_id = len(looks)
             buf = io.BytesIO()
             Image.fromarray(rgb).save(buf, "JPEG", quality=88)
-            look = dict(t=t, frame=frame_id, xy=body.xy.tolist(), yaw=body.yaw, jpg=buf.getvalue(), dets=[])
+            look = dict(t=t, frame=frame_id, xy=body.xy.tolist(), yaw=body.yaw, jpg=buf.getvalue(), dets=[],
+                        cmd_rel=None if last_rel is None else round(float(last_rel), 1), head_z=round(body.head_z, 3), mode=mode)
             if k % 30 == 0:
                 det = eyes.detect(rgb, PROMPTS)
                 seen_labels = set()
@@ -351,6 +353,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             d = tgt - body.xy
             rel = wrap_deg(math.degrees(math.atan2(d[1], d[0]) - body.yaw)) if np.linalg.norm(d) > 0.05 else 0.0
             zt = target_z(rel)
+            last_rel = rel
         elif mode == "check":
             zt = Z["move-ego-0-0"]  # arrived: stand and look
         else:
@@ -434,10 +437,11 @@ def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: i
 
 
 @app.local_entrypoint()
-def batch(seconds: float = 600.0, tag: str = "r10", mind: bool = False, move_at: float = -1.0):
-    """The preselected robustness houses (configs/robustness_houses.json), in parallel. Every run is kept."""
+def batch(seconds: float = 600.0, tag: str = "r10", mind: bool = False, move_at: float = -1.0,
+          houses_file: str = "robustness_houses.json"):
+    """A preselected house list (configs/<houses_file>), in parallel. Every run is kept."""
     import json
-    houses = json.load(open(os.path.join(CFG, "robustness_houses.json")))
+    houses = json.load(open(os.path.join(CFG, houses_file)))
     calls = [live_run.spawn(h, seconds, 0, f"{tag}_{h}", mind, 20.0, move_at) for h in houses]
     for h, c in zip(houses, calls):
         try:
