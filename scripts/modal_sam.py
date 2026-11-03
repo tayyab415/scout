@@ -16,7 +16,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
          .pip_install("torch==2.10.0", "torchvision", index_url="https://download.pytorch.org/whl/cu128")
          .run_commands("git clone https://github.com/facebookresearch/sam3.git /sam3 && pip install -e /sam3")
-         .pip_install("imageio[ffmpeg]", "pillow", "einops", "decord")
+         .pip_install("imageio[ffmpeg]", "pillow", "einops", "decord", "pycocotools", "psutil", "scipy", "pandas", "opencv-python-headless")
          .env({"HF_HOME": "/data/hf"}))
 _tok = os.path.expanduser("~/.cache/huggingface/token")
 secrets = [modal.Secret.from_dict({"HF_TOKEN": open(_tok).read().strip() if modal.is_local() and os.path.exists(_tok) else ""})]
@@ -24,8 +24,14 @@ RES = 256
 
 
 def _predictor():
+    import inspect
+
     from sam3.model_builder import build_sam3_predictor
-    return build_sam3_predictor(version="sam3.1", use_fa3=False)
+    pred = build_sam3_predictor(version="sam3.1", use_fa3=False)
+    # upstream bug (main, Nov 2026): start_session passes kwargs the multiplex model's init_state does not take
+    init, ok = pred.model.init_state, set(inspect.signature(pred.model.init_state).parameters)
+    pred.model.init_state = lambda **kw: init(**{k: v for k, v in kw.items() if k in ok})
+    return pred
 
 
 def _segment(pred, frames, prompt="person"):
@@ -118,3 +124,38 @@ def video(path: str, out: str, prompt: str = "person"):
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     np.savez_compressed(out, sil=r["sil"])
     print("frames", r["fps_frames"], "mask found in", r["raw_mask_frac"])
+
+
+@app.function(image=image, volumes={"/data": vol}, gpu="L40S", timeout=1800, secrets=secrets)
+def debug_run(clip: str = "3006"):
+    import tempfile
+
+    import numpy as np
+    from PIL import Image
+    s = np.load("/data/scout/bridge/showcase.npz")
+    frames = s[f"{clip}_source"]
+    pred = _predictor()
+    d = tempfile.mkdtemp()
+    for i, f in enumerate(frames):
+        Image.fromarray(f).save(f"{d}/{i:05d}.jpg", quality=95)
+    rep = {}
+    for prompt in ("person", "mannequin", "human figure", "doll"):
+        sid = pred.handle_request({"type": "start_session", "resource_path": d})["session_id"]
+        r = pred.handle_request({"type": "add_prompt", "session_id": sid, "frame_index": 0, "text": prompt})
+        desc = lambda o: {k: (getattr(v, "shape", None) or (type(v).__name__ + (f" len {len(v)}" if hasattr(v, "__len__") else ""))) for k, v in o.items()} if isinstance(o, dict) else type(o).__name__  # noqa: E731
+        first = None
+        n = 0
+        for out in pred.handle_stream_request({"type": "propagate_in_video", "session_id": sid}):
+            n += 1
+            if first is None:
+                first = {k: desc(v) if isinstance(v, dict) else str(getattr(v, "shape", type(v).__name__)) for k, v in out.items()}
+        rep[prompt] = dict(add_prompt=desc(r) if isinstance(r, dict) else str(r)[:200],
+                           add_outputs=desc(r.get("outputs", {})) if isinstance(r, dict) else None, n_stream=n, first=first)
+        pred.handle_request({"type": "close_session", "session_id": sid})
+    return rep
+
+
+@app.local_entrypoint()
+def debug(clip: str = "3006"):
+    import json
+    print(json.dumps(debug_run.remote(clip), indent=1, default=str))
