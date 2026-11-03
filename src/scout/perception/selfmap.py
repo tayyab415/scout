@@ -82,15 +82,16 @@ class SelfMap:
                 np.add.at(self.floor, (ij[:, 0], ij[:, 1]), 1)
 
     def stand(self, xy) -> None:
-        """The body stands here, so a body-sized disc around it is walkable."""
+        """The body stands here: the cells under its pelvis (0.1 m around it) are passable."""
         c = self.cell(xy)
-        r = int(round(BODY_RADIUS / self.res))
-        self.visited[max(c[0] - r, 0):c[0] + r + 1, max(c[1] - r, 0):c[1] + r + 1] = True
+        self.visited[max(c[0] - 1, 0):c[0] + 2, max(c[1] - 1, 0):c[1] + 2] = True
 
     # --- what the body knows -----------------------------------------------------------------------
     @property
     def blocked(self) -> np.ndarray:
-        return self.obst >= 2
+        """Obstacle hits, except where the body has physically stood: those cells are passable by definition (an
+        overhang or a table edge can put hits there), so it can always retrace its own trail."""
+        return (self.obst >= 2) & ~self.visited
 
     @property
     def seen(self) -> np.ndarray:
@@ -111,7 +112,7 @@ class SelfMap:
 
     def walkable(self) -> np.ndarray:
         """Seen floor, minus anything closer than the body's clearance to an obstacle."""
-        return ((self.floor > 0) | self.visited) & ~self.inflated()
+        return ((self.floor > 0) & ~self.inflated()) | self.visited  # where it has stood, it fits
 
     def frontiers(self, min_size: int = 3) -> list[tuple[np.ndarray, int]]:
         """Walkable cells next to never-seen cells, clustered. Returns (centre xy, size) per cluster."""

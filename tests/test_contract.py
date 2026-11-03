@@ -166,3 +166,16 @@ def test_recorded_sample_episode_scores_offline():
     r = score_episode(d, Layout.load(glob.glob(d + "/layout_*.npz")[0]))
     assert r["unchanged"]["verify"]["outcome"] == "correct" and r["moved"]["verify"]["outcome"] == "correct"
     assert 0 <= r["unchanged"]["quiz"]["accuracy"] <= 1 and r["unchanged"]["cite"]["cited"] > 0
+
+
+def test_cells_the_body_stood_on_stay_passable():
+    """Regression (dev3 val_227): obstacle hits under the body's own trail trapped it; its trail must stay plannable."""
+    m = SelfMap(origin=[0, 0], size_m=12)
+    xs, ys = np.meshgrid(np.arange(-3, 3, 0.05), np.arange(-3, 3, 0.05))
+    m.integrate(np.stack([xs.ravel(), ys.ravel(), np.zeros(xs.size)], 1))
+    for x in np.arange(-2.0, 0.01, 0.1):
+        m.stand([x, 0.0])                                         # it walked here along y=0
+    over = np.stack([np.linspace(-2, 0, 60), np.full(60, 0.0), np.full(60, 0.8)], 1)  # an overhang over its trail
+    m.integrate(np.concatenate([over, over]))
+    assert not m.blocked[m.cell([-1.0, 0.0])]
+    assert len(m.path([0.0, 0.0], [-2.0, 0.0], goal_radius=0.1)) > 5
