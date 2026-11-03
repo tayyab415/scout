@@ -171,7 +171,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     head_w = imageio.get_writer(f"{out}/head.mp4", fps=2, codec="libx264", quality=8, macro_block_size=1)
     z = Z["move-ego-0-0"].clone()
     path, prog, goal = np.zeros((0, 2)), 0, None
-    last_xy, last_move_t, fell, falls, best_gd, banned = body.xy, 0.0, False, 0, 1e9, []
+    last_xy, last_move_t, fell, falls, best_gd, banned, checks_done = body.xy, 0.0, False, 0, 1e9, [], {}
     n_steps = int(seconds * 30)
     for k in range(n_steps):
         t = k / 30.0
@@ -231,7 +231,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                     trc = mem.tracks[check_tid]
                     uv = next((uv for tr, uv in mem.expected_in_view(cp, cm, FOVY, depth, max_range=5.0) if tr is trc), None)
                     hit = uv is not None and any(
-                        d["label"] == trc.label and d["box"][0] - 25 <= uv[0] <= d["box"][2] + 25 and d["box"][1] - 25 <= uv[1] <= d["box"][3] + 25
+                        d["label"] == trc.label and d["box"][0] - 40 <= uv[0] <= d["box"][2] + 40 and d["box"][1] - 40 <= uv[1] <= d["box"][3] + 40
                         for d in look["dets"])
                     check_views += int(uv is not None)
                     check_hits += int(hit)
@@ -265,8 +265,15 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             # the mind (language model) decides: keep exploring, or go back and check a remembered object
             if mind and mode == "explore" and (t >= next_mind_t or mind_due) and mem.tracks:
                 wk, c, dist, frs = reachable_frontiers()
+                stale = sorted([tr for tr in mem.tracks if tr.status == "ok" and len(tr.sightings) >= 3
+                                and checks_done.get(tr.id, 0) < 2],
+                               key=lambda tr: mem.sightings[tr.sightings[-1]].t)[:5]
                 state = (f"time {t:.0f} s; position x={body.xy[0]:.1f} y={body.xy[1]:.1f}; unexplored openings reachable: {len(frs)}; "
-                         f"last object checked: {last_check_tid}; recent events: " +
+                         f"last object checked: {last_check_tid}; objects already checked twice (do not choose): "
+                         f"{[k for k, v in checks_done.items() if v >= 2]}; "
+                         "confident objects not seen for the longest: " +
+                         ", ".join(f"{tr.id} {tr.label} (last seen {t - mem.sightings[tr.sightings[-1]].t:.0f} s ago)" for tr in stale) +
+                         "; recent events: " +
                          "; ".join(f"{e['kind']} {e.get('label', '')} at {e['t']:.0f}s" for e in events[-6:]
                                    if e["kind"] in ("expected_not_seen", "check_result", "stuck")))
                 dec, lat = ask_mind(mem.table(), state)
@@ -274,7 +281,9 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                 events.append(dict(t=t, kind="mind", decision=dec))
                 next_mind_t, mind_due = t + mind_every, False
                 tid = dec.get("object_id")
-                if dec.get("do") == "check" and isinstance(tid, int) and 0 <= tid < len(mem.tracks) and tid != last_check_tid:
+                if dec.get("do") == "check" and isinstance(tid, int) and 0 <= tid < len(mem.tracks) and tid != last_check_tid \
+                        and checks_done.get(tid, 0) < 2:
+                    checks_done[tid] = checks_done.get(tid, 0) + 1
                     obj = mem.tracks[tid].last_xy(mem)
                     p = np.zeros((0, 2))
                     away = body.xy - obj
@@ -301,10 +310,11 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                 near = len(path) and np.linalg.norm(body.xy - path[-1]) < 0.5
                 if arrived_t is None and (near or stuck):
                     arrived_t, path = t, np.zeros((0, 2))
-                if arrived_t is not None and t - arrived_t >= 2.5 or t - check_t0 > 40:
+                need = 2 if len(tr.sightings) < 2 else 3  # a confident object needs more evidence before it is "gone"
+                if arrived_t is not None and (t - arrived_t >= 4.5 or (check_hits and t - arrived_t >= 1.5)) or t - check_t0 > 40:
                     if check_hits:
                         res = "still there"
-                    elif check_views >= 2:
+                    elif check_views >= need:
                         res = "not there"
                         tr.status = "retracted" if len(tr.sightings) < 2 else "gone"
                     else:
@@ -312,7 +322,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                     events.append(dict(t=t, kind="check_result", track=check_tid, label=tr.label, result=res,
                                        status=tr.status, looks_in_view=check_views, hits=check_hits))
                     last_check_tid, mode, check_tid, arrived_t, goal = check_tid, "explore", None, None, None
-                    mind_due = mind_due or (mind and res == "not there")
+                    mind_due = mind_due or (mind and (res == "not there" or all_done))
             elif goal is None or (np.linalg.norm(body.xy - goal) < 0.6) or stuck:
                 # explore: the nearest reachable frontier (fixed rule, no language model)
                 if stuck and goal is not None:
