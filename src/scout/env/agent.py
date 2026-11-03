@@ -26,6 +26,8 @@ from .core import FOVY, SIZE
 MIX_LEFT = ([-18, 12, 71, 119], [0.0, 0.25, 0.5, 0.75])   # measured in docs/results/motion_tests.md
 MIX_RIGHT = ([18, 33, 85, 122], [0.0, 0.25, 0.5, 0.75])
 LOOK_EVERY, DETECT_EVERY = 15, 30                         # steps: map every 0.5 s, SAM 3.1 every 1 s
+THROUGH_M = 0.2       # depth past the remembered spot that counts as "seeing through" it (ideal simulated depth)
+CHECK_TIMEOUT_S = 75  # walking there, turning to face it, and looking
 
 
 def canonical_answer(result: str, label: str, before_t: float, occupied: bool = False) -> str:
@@ -82,24 +84,51 @@ class Agent:
         return wk, c, dist, fr
 
     def _viewpoint_path(self, xy, obj):
-        away = xy - obj
-        if np.linalg.norm(away) < 4.0:
-            p = self.smap.path(xy, obj + 2.0 * away / (np.linalg.norm(away) + 1e-6), goal_radius=0.6)
-            if len(p) >= 2:
-                return p
-        base = math.atan2(away[1], away[0])
-        for dang in (0, 0.6, -0.6, 1.2, -1.2, 2.0, -2.0):
-            for rr in (2.5, 2.0, 3.0):
-                v = obj + rr * np.array([math.cos(base + dang), math.sin(base + dang)])
-                p = self.smap.path(xy, v, goal_radius=0.4)
-                if len(p) >= 2:
-                    return p
+        """Path to the nearest reachable cell 1.2-3.5 m from obj with a clear line of sight to it on the body's own map.
+
+        One Dijkstra from the body over the planning mask, then the cheapest candidate cell wins."""
+        sm = self.smap
+        wk = sm.planning_mask(xy)
+        c = sm.cell(xy)
+        dist = geodesic(wk, [c], sm.res)
+        fin = np.argwhere(np.isfinite(dist))
+        if len(fin) == 0:
+            return np.zeros((0, 2))
+        pos = sm.origin + (fin + 0.5) * sm.res
+        d_obj = np.linalg.norm(pos - obj, axis=1)
+        cand = fin[(d_obj >= 1.2) & (d_obj <= 3.5)]
+        if len(cand) == 0:
+            return np.zeros((0, 2))
+        order = np.argsort(dist[cand[:, 0], cand[:, 1]])
+        blocked = sm.blocked
+        for k in order[:400]:
+            cell = tuple(cand[k])
+            p0 = sm.pos(cell)
+            seg = p0 + np.linspace(0.0, 1.0, 30)[:, None] * (obj - p0)
+            ij = np.floor((seg[:-4] - sm.origin) / sm.res).astype(int)  # stop short of the object itself
+            if blocked[ij[:, 0], ij[:, 1]].any():
+                continue
+            # walk the distance field back from the chosen cell to the body
+            path, cur = [cell], cell
+            for _ in range(4000):
+                if cur == c:
+                    break
+                i, j = cur
+                nbs = [(i + a, j + b) for a in (-1, 0, 1) for b in (-1, 0, 1) if (a or b)]
+                nxt = min(nbs, key=lambda q: dist[q])
+                if dist[nxt] >= dist[cur]:
+                    break
+                cur = nxt
+                path.append(cur)
+            if path[-1] != c:
+                continue
+            return np.array([sm.pos(q) for q in reversed(path)])
         return np.zeros((0, 2))
 
     def _start_check(self, tid, t, xy, why, question=None):
         obj = self.mem.tracks[tid].last_xy(self.mem).copy()
         p = self._viewpoint_path(xy, obj)
-        if len(p) < 2 and np.linalg.norm(obj - xy) > 2.5:
+        if len(p) < 2 and not (1.2 <= np.linalg.norm(obj - xy) <= 3.5):
             self.log(t, "check_unreachable", track=tid, label=self.mem.tracks[tid].label)
             return False
         last = self.mem.sightings[self.mem.tracks[tid].sightings[-1]]
@@ -198,9 +227,9 @@ class Agent:
                     look["check_uv"] = [u, v]
                     patch = depth[max(v - 6, 0):v + 7, max(u - 6, 0):u + 7]
                     med = float(np.median(patch))
-                    if med > dd + 0.35:
+                    if med > dd + THROUGH_M:
                         c["through"] += 1   # the camera sees past where the object was
-                    elif abs(med - dd) <= 0.35:
+                    elif abs(med - dd) <= THROUGH_M:
                         c["occupied"] += 1  # something is at that spot
                         if not hit and env.eyes is not None:
                             # look closer: SAM 3.1 on a zoomed crop around the spot, asked only for this category
@@ -276,7 +305,7 @@ class Agent:
         if c["arrived"] is None and (near or stuck or len(self.path) < 2):
             to = c["xy"] - xy
             rel = wrap_deg(math.degrees(math.atan2(to[1], to[0]) - yaw))
-            if abs(rel) < 25 or t - c["t0"] > 30:
+            if abs(rel) < 25 or t - c["t0"] > 60:
                 c["arrived"], c["turn"] = t, 0
                 self.path = np.zeros((0, 2))
             elif np.linalg.norm(to) < 1.6:
@@ -290,7 +319,7 @@ class Agent:
                 else:
                     self.path, c["turn"] = np.zeros((0, 2)), (1 if rel > 0 else -1)
         done = c["arrived"] is not None and (t - c["arrived"] >= 4.5 or (c["hits"] and t - c["arrived"] >= 1.5))
-        if done or t - c["t0"] > 40:
+        if done or t - c["t0"] > CHECK_TIMEOUT_S:
             if c["hits"]:
                 res = "still there"
             elif c["through"] >= 2:
