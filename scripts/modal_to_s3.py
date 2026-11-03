@@ -40,6 +40,11 @@ def copy(parts: list) -> dict:
 
 
 @app.local_entrypoint()
+def one(src: str = "/data/scout/env/final3", dst: str = "env/final3"):
+    print(copy.remote([(src, dst)]))
+
+
+@app.local_entrypoint()
 def main():
     parts = [("/data/scout/env", "env"), ("/data/scout/live", "live"), ("/data/house/layouts", "house/layouts"),
              ("/data/house/scenes", "house/scenes"), ("/data/house/objects", "house/objects")]
