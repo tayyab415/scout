@@ -426,3 +426,28 @@ def demo_remote(tag: str, episode: str) -> str:
 @app.local_entrypoint()
 def demo(tag: str = "final2", episode: str = ""):
     print(demo_remote.remote(tag, episode))
+
+
+@app.local_entrypoint()
+def resume(tag: str = "final3", explore_s: float = 240.0):
+    """Re-run only the planned episodes of a frozen plan that have no manifest yet (crash or client loss), with the
+    same spec and seed. Run with `modal run --detach` so losing the local client does not stop the app."""
+    import json
+    import subprocess
+    plan = json.load(open(os.path.join(CFG, f"frozen_{tag}.json")))
+    r = subprocess.run(["modal", "volume", "ls", "--json", VOLUME, f"/scout/env/{tag}"], capture_output=True, text=True)
+    have = set()
+    for x in json.loads(r.stdout or "[]"):
+        ep = os.path.basename(x["filename"].rstrip("/"))
+        r2 = subprocess.run(["modal", "volume", "ls", "--json", VOLUME, f"/scout/env/{tag}/{ep}"], capture_output=True, text=True)
+        if any(os.path.basename(y["filename"]) == "manifest.json" for y in json.loads(r2.stdout or "[]")):
+            have.add(ep)
+    todo = [(b, h) for b in plan["brains"] for h in plan["houses"] if f"{b}_{h}_s{plan.get('seed', 0)}" not in have]
+    print("complete:", len(have), "to run:", todo, flush=True)
+    calls = [(b, h, run_episode.spawn(h, b, plan.get("seed", 0), tag, plan.get("explore_s", explore_s))) for b, h in todo]
+    for b, h, c in calls:
+        try:
+            r = c.get()
+            print("EP", b, h, json.dumps({"target": r["manifest"].get("target"), "answers": r["answers"]}))
+        except Exception as e:
+            print("EP", b, h, "CRASHED", type(e).__name__, str(e)[:400])
