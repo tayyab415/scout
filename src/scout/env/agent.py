@@ -94,9 +94,10 @@ class Agent:
             self.log(t, "check_unreachable", track=tid, label=self.mem.tracks[tid].label)
             return False
         last = self.mem.sightings[self.mem.tracks[tid].sightings[-1]]
+        best = max((self.mem.sightings[i] for i in self.mem.tracks[tid].sightings), key=lambda s: s.score)
         self.check = dict(tid=tid, t0=t, xy=obj, xyz=last.xyz.copy(), arrived=None, turn=0, hits=0, through=0,
                           occupied=0, views=0, frames=[], question=question, n_before=len(self.mem.tracks[tid].sightings),
-                          before_frame=last.frame, before_t=last.t)
+                          before_frame=last.frame, before_t=last.t, best_frame=best.frame)
         self.mode = "check"
         self._set_goal(p, t)
         self.log(t, "check_start", track=tid, label=self.mem.tracks[tid].label, why=why, question=question)
@@ -119,7 +120,8 @@ class Agent:
         Image.fromarray(obs["rgb"]).save(buf, "JPEG", quality=88)
         look = dict(t=round(t, 3), frame=len(self.looks), xy=[float(v) for v in xy], yaw=float(obs["yaw"]),
                     head_z=round(float(obs["head_z"]), 3), mode=self.mode, cmd_rel=self.last_rel, jpg=buf.getvalue(),
-                    dets=None)
+                    dets=None, cam_pos=[round(float(v), 4) for v in obs["cam_pos"]],
+                    cam_mat=[round(float(v), 5) for v in np.asarray(obs["cam_mat"]).ravel()])
         self.looks.append(look)
         if not detect:
             return look
@@ -184,12 +186,25 @@ class Agent:
                 v = int(-pc[1] / dd * f + SIZE / 2)
                 if 8 <= u < SIZE - 8 and 8 <= v < SIZE - 8:
                     c["views"] += 1
+                    look["check_uv"] = [u, v]
                     patch = depth[max(v - 6, 0):v + 7, max(u - 6, 0):u + 7]
                     med = float(np.median(patch))
                     if med > dd + 0.35:
                         c["through"] += 1   # the camera sees past where the object was
                     elif abs(med - dd) <= 0.35:
                         c["occupied"] += 1  # something is at that spot
+                        if not hit and env.eyes is not None:
+                            # look closer: SAM 3.1 on a zoomed crop around the spot, asked only for this category
+                            half = 128
+                            x0, y0 = min(max(u - half, 0), SIZE - 2 * half), min(max(v - half, 0), SIZE - 2 * half)
+                            from PIL import Image
+                            crop = np.asarray(Image.fromarray(obs["rgb"][y0:y0 + 2 * half, x0:x0 + 2 * half]).resize((SIZE, SIZE)))
+                            zd = env.eyes.detect(crop, [trc.label]).get(trc.label, [])
+                            cu, cv = (u - x0) * SIZE // (2 * half), (v - y0) * SIZE // (2 * half)
+                            zhit = any(sc >= 0.5 and m[max(cv - 20, 0):cv + 21, max(cu - 20, 0):cu + 21].any() for sc, m in zd)
+                            look["zoom"] = dict(box=[x0, y0, x0 + 2 * half, y0 + 2 * half], hit=bool(zhit),
+                                                score=round(max([sc for sc, _ in zd], default=0.0), 3))
+                            hit = hit or zhit
             c["hits"] += int(hit)
             c["frames"].append(look["frame"])
         return look
@@ -258,10 +273,13 @@ class Agent:
                      through=c["through"], occupied=c["occupied"], views=c["views"], question=c["question"])
             if c["question"]:
                 remembered = f"a {tr.label} seen {c['n_before']} times, last at t={c['before_t']:.0f}s"
-                say = self.brain.phrase(c["question"], remembered, {"still there": "still there", "not found": "not found",
-                                                                    "unclear": "unclear"}[res])
+                finding = {"still there": "still there", "not found": "not found", "unclear": "unclear"}[res]
+                if res == "unclear" and c["occupied"] >= 2:
+                    finding = "unclear: something is still at that exact spot, but I could not recognise it as the " + tr.label
+                say = self.brain.phrase(c["question"], remembered, finding)
                 self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, track=c["tid"],
-                                    before_frame=c["before_frame"], now_frames=c["frames"][-3:]))
+                                    before_frame=c["before_frame"], best_frame=c["best_frame"], now_frames=c["frames"][-3:],
+                                    evidence=dict(hits=c["hits"], through=c["through"], occupied=c["occupied"], views=c["views"])))
                 self.log(t, "answer", say=say, result=res)
             self.last_check, self.mode, self.check, self.goal = c["tid"], "explore", None, None
             self.mind_due = self.mind_due or (self.mind and (res == "not found" or self.all_done))

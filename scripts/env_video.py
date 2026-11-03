@@ -154,8 +154,8 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         mi = max(int(np.searchsorted(mt, t + 1e-9, side="right") - 1), 0)
         canvas.paste(map_panel(m, mi, st, t, 320, meta), (960, 40))
         dr.text((8, 8), title or f"Scout environment  |  {man['house']}  |  brain: {brain}", fill=(235, 235, 235), font=mid)
-        dr.text((648, 362), "head camera + SAM 3.1 (boxes only on their own frame)", fill=(170, 170, 170), font=small)
-        dr.text((968, 362), "its own map from depth; dots = memory", fill=(170, 170, 170), font=small)
+        dr.text((648, 362), "head camera + SAM 3.1", fill=(170, 170, 170), font=small)
+        dr.text((968, 362), "its own map + memory", fill=(170, 170, 170), font=small)
         evs = [e for e in st.events_until(t) if e["kind"] in CAPTION]
         y = 400
         for e in evs[-5:]:
@@ -179,16 +179,34 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         dr.text((30, 24), f'Q: "{ques}"', fill=(255, 210, 90), font=big)
         dr.text((30, 66), f'A: "{q["say"]}"', fill=(120, 230, 140), font=mid)
         dr.text((30, 100), f"verdict: {q.get('result')}   (brain: {brain})", fill=(200, 200, 200), font=small)
-        if q.get("before_frame") is not None:
-            b = Image.open(f"{adir}/frames/{q['before_frame']:04d}.jpg").convert("RGB").resize((560, 560))
-            card.paste(b, (40, 140))
-            tb = st.looks[q["before_frame"]]["t"]
-            dr.text((40, 120), f"what it remembered (t={tb:.0f}s)", fill=(200, 200, 200), font=small)
+        bf = q.get("best_frame", q.get("before_frame"))
+        if bf is not None:
+            b = Image.open(f"{adir}/frames/{bf:04d}.jpg").convert("RGB")
+            bd = ImageDraw.Draw(b)
+            for det in st.boxes_for_frame(bf):
+                if det.get("track") == q.get("track"):
+                    bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
+            card.paste(b.resize((560, 560)), (40, 140))
+            dr.text((40, 120), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
         if q.get("now_frames"):
             nf = q["now_frames"][-1]
-            b = Image.open(f"{adir}/frames/{nf:04d}.jpg").convert("RGB").resize((560, 560))
-            card.paste(b, (680, 140))
-            dr.text((680, 120), f"what it saw when it went back (t={st.looks[nf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
+            lk = st.looks[nf]
+            b = Image.open(f"{adir}/frames/{nf:04d}.jpg").convert("RGB")
+            bd = ImageDraw.Draw(b)
+            if lk.get("check_uv"):
+                u, v = lk["check_uv"]
+                bd.ellipse([u - 18, v - 18, u + 18, v + 18], outline=(230, 0, 150), width=5)
+            if lk.get("zoom"):
+                bd.rectangle(lk["zoom"]["box"], outline=(120, 200, 255), width=3)
+            for det in st.boxes_for_frame(nf):
+                if det.get("track") == q.get("track"):
+                    bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
+            card.paste(b.resize((560, 560)), (680, 140))
+            dr.text((680, 120), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
+        ev = q.get("evidence")
+        if ev:
+            dr.text((30, 704 - 24), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
+                    f"{ev['through']}, something there {ev['occupied']}", fill=(170, 170, 170), font=small)
         for _ in range(15 * 6):
             w.append_data(np.asarray(card))
     w.close()
