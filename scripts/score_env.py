@@ -106,6 +106,18 @@ def main():
                      f"{tally('moved')} | {tally('unchanged', 'verify_recall').split(' / ')[0]} / "
                      f"{tally('moved', 'verify_recall').split(' / ')[0]} | {qa} | {ev} | {chk['correct']} / {chk['abstain']} / {chk['wrong']} | "
                      f"{(str(round(100 * float(np.median(fl)))) + '%') if fl else '-'} | {falls} / {ups} |")
+    # every verification outcome, separately, per brain and arm (no "other" bucket)
+    kinds = ["correct", "abstain", "wrong", "wrong target", "ineligible", "no answer", "not run"]
+    lines += ["", "Verification outcomes per arm (physical check; 'not run' = no target frozen, crashed, or moved arm skipped):", "",
+              "| brain | arm | " + " | ".join(kinds) + " |", "|---|---|" + "---|" * len(kinds)]
+    for b, ss in sorted(by.items()):
+        for arm in ("unchanged", "moved"):
+            c = defaultdict(int)
+            for s in ss:
+                v = s.get(arm, {}).get("verify") if "error" not in s else None
+                c[v["outcome"] if v else "not run"] += 1
+            lines.append(f"| {b} | {arm} | " + " | ".join(str(c[k]) for k in kinds) + " |")
+    lines += ["", "Falls, recoveries and own checks are counted on the unchanged arm (it shares the exploration with the moved arm)."]
     errs = [s for s in scores if "error" in s]
     md = "\n".join(lines) + ("\n\nNot completed: " + ", ".join(f"{s['episode']} ({s['error']})" for s in errs) if errs else "")
     open(f"{root}/leaderboard.md", "w").write(md + "\n")
