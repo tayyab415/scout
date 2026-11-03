@@ -77,16 +77,16 @@ def main():
     for s in scores:
         by[s["plan_brain"]].append(s)
     lines = ["| brain | episodes planned | completed | target frozen | verify unchanged (correct / abstain / wrong / other) | "
-             "verify moved (correct / abstain / wrong / other) | quiz accuracy (errors) | affirmative answers with valid evidence | "
+             "verify moved (correct / abstain / wrong / other) | memory-only answer, unchanged / moved (correct) | quiz accuracy (errors) | affirmative answers with valid evidence | "
              "own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |",
-             "|---|---|---|---|---|---|---|---|---|---|---|"]
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for b, ss in sorted(by.items()):
         done = [s for s in ss if "error" not in s]
 
-        def tally(arm):
+        def tally(arm, key="verify"):
             c = defaultdict(int)
             for s in done:
-                v = s.get(arm, {}).get("verify")
+                v = s.get(arm, {}).get(key)
                 c[v["outcome"] if v else "not run"] += 1
             other = sum(v for k, v in c.items() if k not in ("correct", "abstain", "wrong"))
             return f"{c['correct']} / {c['abstain']} / {c['wrong']} / {other}"
@@ -103,7 +103,8 @@ def main():
         qa = f"{np.mean([q['accuracy'] for q in quiz]):.2f} ({sum(q['errors'] for q in quiz)})" if quiz else "-"
         ev = f"{sum(c['affirmative_supported'] for c in cite)}/{sum(c['affirmative'] for c in cite)}" if cite else "-"
         lines.append(f"| {b} | {len(ss)} | {len(done)} | {sum(1 for s in done if s.get('target'))} | {tally('unchanged')} | "
-                     f"{tally('moved')} | {qa} | {ev} | {chk['correct']} / {chk['abstain']} / {chk['wrong']} | "
+                     f"{tally('moved')} | {tally('unchanged', 'verify_recall').split(' / ')[0]} / "
+                     f"{tally('moved', 'verify_recall').split(' / ')[0]} | {qa} | {ev} | {chk['correct']} / {chk['abstain']} / {chk['wrong']} | "
                      f"{(str(round(100 * float(np.median(fl)))) + '%') if fl else '-'} | {falls} / {ups} |")
     errs = [s for s in scores if "error" in s]
     md = "\n".join(lines) + ("\n\nNot completed: " + ", ".join(f"{s['episode']} ({s['error']})" for s in errs) if errs else "")
