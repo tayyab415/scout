@@ -13,7 +13,7 @@ from ..world.house import CEILING_GROUP, build_body_world
 
 
 class MotivoBody:
-    def __init__(self, root: str, house: str, skills_path: str, device: str = "cuda"):
+    def __init__(self, root: str, house: str, skills_path: str, device: str = "cuda", eye_pitch_deg: float = 0.0):
         import mujoco
         import torch
         from humenv import make_humenv
@@ -25,7 +25,7 @@ class MotivoBody:
         self.axis = self._calibrate(make_humenv)
         self.env, _ = make_humenv(num_envs=1, state_init="Default")
         self.u = self.env.unwrapped
-        self.M = build_body_world(root, house)
+        self.M = build_body_world(root, house, eye_pitch_deg=eye_pitch_deg)
         self.u.model, self.u.data = self.M, mujoco.MjData(self.M)
         self.D = self.u.data
         self.pelvis = mujoco.mj_name2id(self.M, mujoco.mjtObj.mjOBJ_BODY, "Pelvis")

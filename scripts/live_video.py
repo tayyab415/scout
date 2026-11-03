@@ -68,11 +68,24 @@ def main():
     crop_c = (all_xy.min(0) + all_xy.max(0)) / 2
     crop_half = max(float(np.ptp(all_xy, 0).max()) / 2 + 4.0, 6.0)
     waypoints = [(e["t"], np.array(e["xy"])) for e in log["events"] if e["kind"] == "new_waypoint"]
-    captions = [(e["t"], {"new_object": lambda e: f"t={e['t']:.0f}s  I see a {e['label']} (remembered)",
-                          "stuck": lambda e: f"t={e['t']:.0f}s  I'm stuck, trying another way",
-                          "new_waypoint": lambda e: f"t={e['t']:.0f}s  heading to an unexplored opening",
-                          "expected_not_seen": lambda e: f"t={e['t']:.0f}s  the {e['label']} is not where I saw it",
-                          "fell": lambda e: f"t={e['t']:.0f}s  I fell"}[e["kind"]](e)) for e in log["events"]]
+    fmt = {"new_object": lambda e: f"t={e['t']:.0f}s  I see a {e['label']} (remembered)",
+           "stuck": lambda e: f"t={e['t']:.0f}s  I'm stuck, trying another way",
+           "new_waypoint": lambda e: f"t={e['t']:.0f}s  heading to an unexplored opening",
+           "expected_not_seen": lambda e: f"t={e['t']:.0f}s  the {e['label']} is not where I saw it",
+           "fell": lambda e: f"t={e['t']:.0f}s  I fell",
+           "explored_all": lambda e: f"t={e['t']:.0f}s  no unexplored openings left",
+           "mind": lambda e: (f"t={e['t']:.0f}s  MIND: " + (e['decision'].get('why') or e['decision'].get('do', ''))) if e['decision'].get('do') == 'check' else None,
+           "check_start": lambda e: f"t={e['t']:.0f}s  going back to check the {e['label']}",
+           "check_result": lambda e: f"t={e['t']:.0f}s  checked the {e['label']}: {e['result']}" + {"retracted": " -> it was a misrecognition, forgotten", "gone": " -> marked as gone"}.get(e.get('status'), ""),
+           "check_unreachable": lambda e: None}
+    captions = [(e["t"], fmt[e["kind"]](e)) for e in log["events"] if e["kind"] in fmt]
+    captions = [c for c in captions if c[1]]
+    try:
+        for ev in json.load(open(f"{a.run}/truth_evaluator_only.json")).get("evaluator_events", []):
+            captions.append((ev["t"], f"t={ev['t']:.0f}s  [TEST, body not told] the {ev['label']} was moved to the {ev['to_room']}"))
+        captions.sort(key=lambda c: c[0])
+    except FileNotFoundError:
+        pass
     reader = imageio.get_reader(f"{a.run}/follow.mp4")
     w = imageio.get_writer(a.out, fps=15, codec="libx264", quality=8, macro_block_size=1)
     cache_map = {}

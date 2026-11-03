@@ -41,6 +41,10 @@ def track_summary(mem: dict) -> str:
                      f"{x:.1f} | {y:.1f} | {ids}")
         for t, fr in tr.get("misses", []):
             lines.append(f"{tr['id']} | {tr['label']} NOT seen at its last known place at t={t:.1f}s (frame {fr})")
+        if tr.get("status") == "retracted":
+            lines.append(f"{tr['id']} | {tr['label']}: a second look found nothing there, probably a misrecognition")
+        elif tr.get("status") == "gone":
+            lines.append(f"{tr['id']} | {tr['label']}: was seen here repeatedly, but a deliberate check found it gone")
     return "\n".join(lines)
 
 

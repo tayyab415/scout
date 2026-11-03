@@ -29,6 +29,7 @@ class Track:
     label: str
     sightings: list[int] = field(default_factory=list)
     misses: list[tuple[float, int]] = field(default_factory=list)  # (t, frame) looked right at it and did not see it
+    status: str = "ok"  # "ok", "retracted" (a one-off sighting that a second look did not confirm), "gone" (was there, now is not)
 
     def last_xy(self, mem: "Episodic") -> np.ndarray:
         return mem.sightings[self.sightings[-1]].xyz[:2]
@@ -46,7 +47,7 @@ class Episodic:
         self.sightings.append(s)
         best, best_d = None, SAME_OBJECT_M
         for tr in self.tracks:
-            if tr.label != label:
+            if tr.label != label or tr.status != "ok":
                 continue
             d = float(np.linalg.norm(tr.last_xy(self) - s.xyz[:2]))
             if d < best_d:
@@ -68,6 +69,8 @@ class Episodic:
         R = np.asarray(cam_mat).reshape(3, 3)
         out = []
         for tr in self.tracks:
+            if tr.status != "ok":
+                continue
             p = self.sightings[tr.sightings[-1]].xyz
             pc = R.T @ (p - np.asarray(cam_pos))
             if pc[2] >= -0.3:
@@ -85,12 +88,18 @@ class Episodic:
         return out
 
     def table(self) -> str:
-        """Plain-text memory for the language model: one line per sighting."""
-        lines = ["sighting_id | time_s | object | confidence | x_m | y_m | object_id"]
+        """Plain-text memory for the language model: one line per remembered object, plus misses and verdicts."""
+        lines = ["object_id | object | first_seen_s | last_seen_s | times_seen | best_confidence | x_m | y_m | sighting_ids (first, best, last)"]
         for tr in self.tracks:
-            for sid in tr.sightings:
-                s = self.sightings[sid]
-                lines.append(f"{s.id} | {s.t:.1f} | {s.label} | {s.score:.2f} | {s.xyz[0]:.1f} | {s.xyz[1]:.1f} | {tr.id}")
+            ss = [self.sightings[i] for i in tr.sightings]
+            best = max(ss, key=lambda s: s.score)
+            ids = sorted({ss[0].id, best.id, ss[-1].id})
+            lines.append(f"{tr.id} | {tr.label} | {ss[0].t:.1f} | {ss[-1].t:.1f} | {len(ss)} | {best.score:.2f} | "
+                         f"{best.xyz[0]:.1f} | {best.xyz[1]:.1f} | {ids}")
             for t, fr in tr.misses:
-                lines.append(f"- | {t:.1f} | {tr.label} NOT seen at its last known place | - | - | - | {tr.id}")
+                lines.append(f"{tr.id} | {tr.label} NOT seen at its last known place at t={t:.1f}s")
+            if tr.status == "retracted":
+                lines.append(f"{tr.id} | {tr.label}: a second look found nothing there, probably a misrecognition")
+            elif tr.status == "gone":
+                lines.append(f"{tr.id} | {tr.label}: was seen here repeatedly, but a deliberate check found it gone")
         return "\n".join(lines)

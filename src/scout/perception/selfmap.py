@@ -15,7 +15,8 @@ from ..world.grid import descend, geodesic
 FLOOR_Z = 0.06        # a hit this close to the floor counts as floor
 OBST_Z = (0.15, 1.8)  # hits in this height band block the body
 MAX_RANGE = 6.0       # depth beyond this is too noisy to map
-BODY_RADIUS = 0.25
+BODY_RADIUS = 0.25   # planning clearance; wider closes ProcTHOR doorways (~0.9 m)
+CARVE_TO = 0.6       # carve only the first 60% of each eye-to-floor ray (see integrate)
 
 
 def depth_to_points(depth: np.ndarray, cam_pos, cam_mat, fovy_deg: float, stride: int = 4) -> np.ndarray:
@@ -65,8 +66,9 @@ class SelfMap:
 
     # --- updates ---------------------------------------------------------------------------------
     def integrate(self, pts: np.ndarray, cam_xy=None) -> None:
-        """Add depth points. With cam_xy, the floor under each ray from the eye to a floor hit also counts as seen
-        floor: the ray reached the floor there, so nothing at standing height was in the way."""
+        """Add depth points. With cam_xy, the floor under the first part of each ray from the eye to a floor hit
+        also counts as seen floor. Near the eye the ray is high, so only tall things could block it there; the far
+        part runs low over furniture it may have missed, so it is not carved."""
         z = pts[:, 2]
         for mask, arr in ((np.abs(z) < FLOOR_Z, self.floor), ((z > OBST_Z[0]) & (z < OBST_Z[1]), self.obst)):
             ij, _ = self._cells(pts[mask])
@@ -74,7 +76,7 @@ class SelfMap:
         if cam_xy is not None:
             fl = pts[np.abs(z) < FLOOR_Z][:, :2]
             if len(fl):
-                ts = np.linspace(0.0, 1.0, 40)[:, None, None]
+                ts = np.linspace(0.0, CARVE_TO, 24)[:, None, None]
                 seg = np.asarray(cam_xy, float)[None, None] + ts * (fl[None] - np.asarray(cam_xy, float)[None, None])
                 ij, _ = self._cells(np.concatenate([seg.reshape(-1, 2), np.zeros((seg.shape[0] * seg.shape[1], 1))], 1))
                 np.add.at(self.floor, (ij[:, 0], ij[:, 1]), 1)
