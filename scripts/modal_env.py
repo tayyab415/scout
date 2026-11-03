@@ -343,3 +343,35 @@ def replay_check(house: str = "procthor-10k-val_val_935", steps: int = 120) -> d
 def replay(house: str = "procthor-10k-val_val_935"):
     import json
     print(json.dumps(replay_check.remote(house), indent=1))
+
+
+score_image = (modal.Image.debian_slim(python_version="3.12").pip_install("numpy")
+               .add_local_dir(SRC, "/pkg").add_local_dir(CFG, "/cfg")
+               .add_local_file(os.path.join(os.path.dirname(__file__), "score_env.py"), "/scripts/score_env.py"))
+
+
+@app.function(image=score_image, volumes={"/data": vol}, cpu=4, memory=16384, timeout=3600)
+def score_remote(tag: str) -> str:
+    """Run scripts/score_env.py next to the data (no downloads), writing scores.json and leaderboard.md to the volume."""
+    import shutil
+    import sys
+    import tempfile
+    w = tempfile.mkdtemp()
+    os.makedirs(f"{w}/runs/env", exist_ok=True)
+    os.symlink(f"/data/scout/env/{tag}", f"{w}/runs/env/{tag}")
+    os.makedirs(f"{w}/configs", exist_ok=True)
+    if os.path.exists(f"/cfg/frozen_{tag}.json"):
+        shutil.copy(f"/cfg/frozen_{tag}.json", f"{w}/configs/frozen_{tag}.json")
+    os.chdir(w)
+    sys.path.insert(0, "/scripts")
+    sys.path.insert(0, "/pkg")
+    sys.argv = ["score_env.py", "--tag", tag, "--no-fetch", "--layouts", "/data/house/layouts"]
+    import score_env
+    score_env.main()
+    vol.commit()
+    return open(f"/data/scout/env/{tag}/leaderboard.md").read()
+
+
+@app.local_entrypoint()
+def score(tag: str = "final"):
+    print(score_remote.remote(tag))

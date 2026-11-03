@@ -70,6 +70,18 @@ class State:
             out.append((tr["label"], list(ss[-1]["xyz"][:2])))
         return out
 
+    def active_check(self, t: float):
+        """Label of the object being checked at time t (from the agent's own check events), else None."""
+        cur = None
+        for e in self.log["events"]:
+            if e["t"] > t + 1e-9:
+                break
+            if e["kind"] == "check_start":
+                cur = e["label"]
+            elif e["kind"] in ("check_result", "check_unreachable"):
+                cur = None
+        return cur
+
     def events_until(self, t: float, kinds=None):
         return [e for e in self.log["events"] if e["t"] <= t + 1e-9 and (kinds is None or e["kind"] in kinds)]
 
@@ -111,21 +123,19 @@ def map_panel(m, idx, st: State, t, size, meta):
     trail = [px(p) for p in allxy[: idx + 1]]
     if len(trail) > 1:
         dr.line(trail, fill=(255, 130, 40), width=3)
-    f = font(14)
-    labelled = set()
     for lab, p in st.pins(t):
         x, y = px(p)
-        dr.ellipse([x - 4, y - 4, x + 4, y + 4], fill=(40, 120, 255))
-    for lab, p in st.pins(t, confident_only=True):  # one label per category, confident objects only
-        if lab in labelled:
-            continue
-        labelled.add(lab)
-        x, y = px(p)
-        dr.text((x + 6, y - 8), lab, fill=(10, 30, 110), font=f)
+        dr.ellipse([x - 3, y - 3, x + 3, y + 3], fill=(40, 110, 230))
     mm = meta[idx]
+    tgt = st.active_check(t)
     if mm.get("check"):
         x, y = px(mm["check"])
-        dr.ellipse([x - 10, y - 10, x + 10, y + 10], outline=(230, 0, 150), width=3)
+        dr.ellipse([x - 11, y - 11, x + 11, y + 11], outline=(230, 0, 150), width=4)
+        if tgt:
+            f = font(18)
+            w_ = dr.textlength(tgt, font=f)
+            dr.rectangle([x + 12, y - 12, x + 20 + w_, y + 12], fill=(255, 255, 255))
+            dr.text((x + 16, y - 11), tgt, fill=(160, 0, 110), font=f)
     x, y = px(allxy[idx])
     yaw = float(m["yaw"][idx])
     dr.ellipse([x - 7, y - 7, x + 7, y + 7], fill=(255, 60, 0))
@@ -173,13 +183,18 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         dr.text((8, 8), title or f"Scout environment  |  {man['house']}  |  brain: {brain}", fill=(235, 235, 235), font=mid)
         dr.text((648, 362), "head camera + SAM 3.1", fill=(170, 170, 170), font=small)
         dr.text((968, 362), "its own map + memory", fill=(170, 170, 170), font=small)
+        import textwrap
         evs = [e for e in st.events_until(t) if e["kind"] in CAPTION]
-        y = 400
+        lines = []
         for e in evs[-5:]:
             txt = f"t={e['t']:5.1f}s  " + CAPTION[e["kind"]](e)
             col = (120, 230, 140) if e["kind"] == "answer" else ((255, 210, 90) if e["kind"] == "question" else (225, 225, 225))
-            dr.text((656, y), txt[:70], fill=col, font=small if len(txt) > 50 else mid)
-            y += 28
+            for k, ln in enumerate(textwrap.wrap(txt, 56)):
+                lines.append((("      " if k else "") + ln, col))
+        y = 396
+        for ln, col in lines[-8:]:
+            dr.text((652, y), ln, fill=col, font=small)
+            y += 22
         if moved and t >= moved["t"]:
             dr.text((8, 530), f"[evaluator, hidden from the agent] moved the {moved['category']} at t={moved['t']:.0f}s",
                     fill=(255, 120, 120), font=mid)
@@ -193,9 +208,22 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         card = Image.new("RGB", (W, H), (14, 14, 18))
         dr = ImageDraw.Draw(card)
         ques = next((x["text"] for x in st.log["qa"] if x["kind"] == "question"), "")
-        dr.text((30, 24), f'Q: "{ques}"', fill=(255, 210, 90), font=big)
-        dr.text((30, 66), f'A: "{q["say"]}"', fill=(120, 230, 140), font=mid)
-        dr.text((30, 100), f"verdict: {q.get('result')}   (brain: {brain})", fill=(200, 200, 200), font=small)
+        import textwrap
+        dr.text((30, 16), f'Q: "{ques}"', fill=(255, 210, 90), font=mid)
+        rec = (st.log.get("recall") or [None])[-1]
+        want = "still there" if arm == "unchanged" else "not found"
+        y = 48
+        if rec:
+            ok = rec.get("result") == want
+            for ln in textwrap.wrap(f'Without looking (memory-persistence rule): "{rec["say"]}"', 100)[:2]:
+                dr.text((30, y), ln, fill=(120, 230, 140) if ok else (255, 110, 110), font=small)
+                y += 20
+        ok = q.get("result") == want
+        for ln in textwrap.wrap(f'After walking back to look: "{q["say"]}"', 100)[:2]:
+            dr.text((30, y), ln, fill=(120, 230, 140) if ok else (255, 110, 110), font=small)
+            y += 20
+        dr.text((30, y + 2), f"truth: {'the evaluator moved it' if arm == 'moved' else 'nothing was moved'}   |   "
+                f"verdict scored: {q.get('result')}   |   brain: {brain}", fill=(200, 200, 200), font=small)
         bf = q.get("best_frame", q.get("before_frame"))
         if bf is not None:
             b = Image.open(f"{adir}/frames/{bf:04d}.jpg").convert("RGB")
@@ -203,8 +231,8 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(bf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((520, 520)), (40, 140))
-            dr.text((40, 120), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
+            card.paste(b.resize((520, 520)), (40, 150))
+            dr.text((40, 130), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
         if q.get("now_frames"):
             nf = q["now_frames"][-1]
             lk = st.looks[nf]
@@ -218,11 +246,11 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(nf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((520, 520)), (680, 140))
-            dr.text((680, 120), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
+            card.paste(b.resize((520, 520)), (680, 150))
+            dr.text((680, 130), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
         ev = q.get("evidence")
         if ev:
-            dr.text((30, 676), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
+            dr.text((30, 684), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
                     f"{ev['through']}, something there {ev['occupied']}", fill=(170, 170, 170), font=small)
         for _ in range(15 * 6):
             w.append_data(np.asarray(card))
