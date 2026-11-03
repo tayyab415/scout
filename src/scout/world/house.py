@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import glob
 import json
+import math
 import os
 
 import numpy as np
@@ -76,10 +77,11 @@ def build_house(root: str, name: str, ceiling: bool = True):
     return world.compile()
 
 
-def build_body_world(root: str, name: str, ceiling: bool = True, fovy: float = 75):
+def build_body_world(root: str, name: str, ceiling: bool = True, fovy: float = 75, eye_pitch_deg: float = 0.0):
     """HumEnv robot first (its bodies, sensors and actuators must keep their indices), then the house.
 
-    SMPL body frames are +x left, +y up, +z forward; the `eye` camera looks along the head's +z.
+    SMPL body frames are +x left, +y up, +z forward; the `eye` camera looks along the head's +z, tilted down by
+    eye_pitch_deg (people look at the floor a few metres ahead when they walk).
     Ceiling geoms are put in group CEILING_GROUP.
     """
     import humenv
@@ -87,7 +89,9 @@ def build_body_world(root: str, name: str, ceiling: bool = True, fovy: float = 7
     world = mujoco.MjSpec.from_file(os.path.join(os.path.dirname(humenv.__file__), "assets", "robot.xml"))
     world.compiler.boundmass, world.compiler.boundinertia = 1e-3, 1e-6
     world.geom("floor").pos = [0, 0, -0.003]
-    world.body("Head").add_camera(name="eye", pos=[0, 0.05, 0.10], xyaxes=[-1, 0, 0, 0, 1, 0], fovy=fovy)
+    world.geom("floor").group = 3  # still collides, but cameras do not see an endless floor through the windows
+    a = math.radians(eye_pitch_deg)
+    world.body("Head").add_camera(name="eye", pos=[0, 0.05, 0.10], xyaxes=[-1, 0, 0, 0, math.cos(a), math.sin(a)], fovy=fovy)
     world.attach(_house_spec(root, name, ceiling), prefix="h_", frame=world.worldbody.add_frame(pos=[0, 0, 0]))
     world.visual.global_.offwidth, world.visual.global_.offheight = 1280, 960
     world.visual.headlight.ambient = [0.45] * 3
