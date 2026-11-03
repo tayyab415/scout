@@ -179,3 +179,29 @@ def test_cells_the_body_stood_on_stay_passable():
     m.integrate(np.concatenate([over, over]))
     assert not m.blocked[m.cell([-1.0, 0.0])]
     assert len(m.path([0.0, 0.0], [-2.0, 0.0], goal_radius=0.1)) > 5
+
+
+def test_compose_runs_end_to_end_on_a_recorded_episode(tmp_path):
+    """Regression: an import inside the evidence-card loop once broke compose() for every episode."""
+    import shutil
+    import imageio.v2 as imageio
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import env_video
+    src = os.path.join(ROOT, "tests/fixtures/neighbour_chair_episode")
+    d = tmp_path / "ep"
+    shutil.copytree(src, d)
+    log = json.load(open(d / "moved" / "log.json"))
+    n = len(log["observer_times_prefix"]) + len(log["observer_times"])
+    for name in ("observer_prefix", "observer_moved"):  # tiny stand-in observer videos with the right frame count
+        w = imageio.get_writer(str(d / f"{name}.mp4"), fps=15, codec="libx264", macro_block_size=1)
+        k = len(log["observer_times_prefix"]) if name == "observer_prefix" else len(log["observer_times"])
+        for _ in range(k):
+            w.append_data(np.zeros((64, 96, 3), np.uint8))
+        w.close()
+    for f in log["looks"]:
+        p = d / "moved" / "frames" / f"{f['frame']:04d}.jpg"
+        if not p.exists():
+            from PIL import Image
+            Image.fromarray(np.zeros((512, 512, 3), np.uint8)).save(p)
+    env_video.compose(str(d), "moved", str(tmp_path / "out.mp4"))
+    assert imageio.get_reader(str(tmp_path / "out.mp4")).count_frames() >= n

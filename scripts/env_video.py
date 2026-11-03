@@ -211,14 +211,14 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         card = Image.new("RGB", (W, H), (14, 14, 18))
         dr = ImageDraw.Draw(card)
         ques = next((x["text"] for x in st.log["qa"] if x["kind"] == "question"), "")
-        import json
-        import os
+        import json as _json  # aliases: a plain import here would make json/os local to all of compose()
+        import os as _os
         import textwrap
 
         from scout.env.scoring import score_verify  # the card uses the scorer's own grading
-        ep_dir = os.path.dirname(adir.rstrip("/"))
-        man_ = json.load(open(f"{ep_dir}/manifest.json")) if os.path.exists(f"{ep_dir}/manifest.json") else {}
-        ev_ = json.load(open(f"{adir}/evaluator.json")) if os.path.exists(f"{adir}/evaluator.json") else {}
+        ep_dir = _os.path.dirname(adir.rstrip("/"))
+        man_ = _json.load(open(f"{ep_dir}/manifest.json")) if _os.path.exists(f"{ep_dir}/manifest.json") else {}
+        ev_ = _json.load(open(f"{adir}/evaluator.json")) if _os.path.exists(f"{adir}/evaluator.json") else {}
         colour = {"correct": (120, 230, 140), "wrong": (255, 110, 110), "wrong target": (255, 110, 110),
                   "abstain": (255, 200, 90)}
 
