@@ -375,3 +375,30 @@ def score_remote(tag: str) -> str:
 @app.local_entrypoint()
 def score(tag: str = "final"):
     print(score_remote.remote(tag))
+
+
+@app.function(image=score_image, volumes={"/data": vol}, cpu=2, timeout=900)
+def check_evidence(tag: str) -> list:
+    """Evidence counts of every question-triggered check in a tag (for diagnosing abstentions)."""
+    import glob
+    import json
+    out = []
+    for f in sorted(glob.glob(f"/data/scout/env/{tag}/*/*/log.json")):
+        arm = f.split("/")[-2]
+        ep = f.split("/")[-3]
+        log = json.load(open(f))
+        for e in log["events"]:
+            if e["kind"] == "check_result" and e.get("question"):
+                out.append(dict(ep=ep, arm=arm, result=e["result"], hits=e["hits"], through=e["through"],
+                                occupied=e["occupied"], views=e["views"], dur=round(e["t"] - e.get("t_start", e["t"]), 1)))
+            if e["kind"] in ("check_unreachable",) and any(q["kind"] == "question" and abs(q["t"] - e["t"]) < 0.01 for q in log["qa"]):
+                out.append(dict(ep=ep, arm=arm, result="unreachable"))
+        if not any(e["kind"] == "check_result" and e.get("question") for e in log["events"]) and any(q["kind"] == "question" for q in log["qa"]):
+            out.append(dict(ep=ep, arm=arm, result="no check result", qa=[q.get("result") for q in log["qa"] if q["kind"] == "answer"]))
+    return out
+
+
+@app.local_entrypoint()
+def evidence(tag: str = "final"):
+    for r in check_evidence.remote(tag):
+        print(r)

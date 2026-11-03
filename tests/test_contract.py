@@ -135,3 +135,23 @@ def test_body_inside_a_clearance_margin_can_still_plan_out():
     obstacles = np.array([m.pos(c) for c in np.argwhere(m.blocked)])
     far = [q for q in p if np.linalg.norm(q) > 0.7]  # beyond the escape zone the clearance holds
     assert _clearance(m, np.array(far), obstacles) >= BODY_RADIUS - 1e-6
+
+
+def test_viewpoint_is_reachable_close_and_has_line_of_sight():
+    from scout.env.agent import Agent
+    a = Agent(brain=None, mind=False)
+    m = SelfMap(origin=[0, 0], size_m=16)
+    xs, ys = np.meshgrid(np.arange(-5, 5, 0.05), np.arange(-5, 5, 0.05))
+    m.integrate(np.stack([xs.ravel(), ys.ravel(), np.zeros(xs.size)], 1))
+    wall = np.stack([np.full(120, 2.0), np.linspace(-5, 1.0, 120), np.full(120, 1.0)], 1)  # wall x=2 with a gap above y=1
+    m.integrate(np.concatenate([wall, wall]))
+    m.stand([0, 0])
+    a.smap = m
+    obj = np.array([4.0, -2.0])  # behind the wall from the body's side
+    p = a._viewpoint_path(np.array([0.0, 0.0]), obj)
+    assert len(p) >= 2
+    end = p[-1]
+    assert 1.2 <= np.linalg.norm(end - obj) <= 3.5
+    seg = end + np.linspace(0, 1, 30)[:, None] * (obj - end)
+    ij = np.floor((seg[:-4] - m.origin) / m.res).astype(int)
+    assert not m.blocked[ij[:, 0], ij[:, 1]].any()

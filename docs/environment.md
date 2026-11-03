@@ -35,13 +35,14 @@ Every brain gets the same table and state strings.
 
 ## How a check reaches a verdict (the body does this, not the brain)
 
-The body walks to a viewpoint 2-3 m from the remembered spot and turns to face it. It then looks for 4.5 s, or
-1.5 s if it sees the object.
+The body walks to the nearest reachable cell 1.2-3.5 m from the remembered spot that has a clear line of sight on
+its own map, and turns to face it. It then looks for 4.5 s, or 1.5 s if it sees the object. The whole check has
+a 75 s budget.
 
 | Verdict | Condition |
 | --- | --- |
 | still there | SAM 3.1 detects the same category on the same memory track, or within 1.5 m of the remembered spot |
-| not found | no such detection, **and** on at least 2 looks the depth camera sees more than 0.35 m past the remembered spot, so the spot is now empty |
+| not found | no such detection, **and** on at least 2 looks the depth camera sees more than 0.2 m past the remembered spot, so the spot is now empty |
 | unclear | anything else: out of view, occluded, or something is still there that SAM did not recognise |
 
 "Not found" never claims the object was moved. Spoken answers say "I couldn't find it where I last saw it".
