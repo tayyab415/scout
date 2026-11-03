@@ -9,9 +9,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 
 import numpy as np
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+sys.path.insert(0, "/pkg")
 W, H = 1280, 720
 FONT = next((p for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf")
              if os.path.exists(p)), None)
@@ -208,22 +211,37 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         card = Image.new("RGB", (W, H), (14, 14, 18))
         dr = ImageDraw.Draw(card)
         ques = next((x["text"] for x in st.log["qa"] if x["kind"] == "question"), "")
+        import json
+        import os
         import textwrap
+
+        from scout.env.scoring import score_verify  # the card uses the scorer's own grading
+        ep_dir = os.path.dirname(adir.rstrip("/"))
+        man_ = json.load(open(f"{ep_dir}/manifest.json")) if os.path.exists(f"{ep_dir}/manifest.json") else {}
+        ev_ = json.load(open(f"{adir}/evaluator.json")) if os.path.exists(f"{adir}/evaluator.json") else {}
+        colour = {"correct": (120, 230, 140), "wrong": (255, 110, 110), "wrong target": (255, 110, 110),
+                  "abstain": (255, 200, 90)}
+
+        def graded(answer):
+            o = score_verify(arm, dict(qa=[answer]), st.mem, man_.get("target"), ev_.get("moves"), ev_)["outcome"]
+            return o, colour.get(o, (200, 200, 200))
         dr.text((30, 16), f'Q: "{ques}"', fill=(255, 210, 90), font=mid)
         rec = (st.log.get("recall") or [None])[-1]
-        want = "still there" if arm == "unchanged" else "not found"
         y = 48
         if rec:
-            ok = rec.get("result") == want
-            for ln in textwrap.wrap(f'Without looking (memory-persistence rule): "{rec["say"]}"', 100)[:2]:
-                dr.text((30, y), ln, fill=(120, 230, 140) if ok else (255, 110, 110), font=small)
+            o, col = graded(rec)
+            for ln in textwrap.wrap(f'Without looking (memory-persistence rule) [{o}]: "{rec["say"]}"', 100)[:3]:
+                dr.text((30, y), ln, fill=col, font=small)
                 y += 20
-        ok = q.get("result") == want
-        for ln in textwrap.wrap(f'After walking back to look: "{q["say"]}"', 100)[:2]:
-            dr.text((30, y), ln, fill=(120, 230, 140) if ok else (255, 110, 110), font=small)
+        o, col = graded(q)
+        for ln in textwrap.wrap(f'After walking back to look [{o}]: "{q["say"]}"', 100)[:3]:
+            dr.text((30, y), ln, fill=col, font=small)
             y += 20
         dr.text((30, y + 2), f"truth: {'the evaluator moved it' if arm == 'moved' else 'nothing was moved'}   |   "
                 f"verdict scored: {q.get('result')}   |   brain: {brain}", fill=(200, 200, 200), font=small)
+        label_y = y + 30                       # image captions sit below the measured text
+        img_y = label_y + 20
+        side = min(520, H - img_y - 40)
         bf = q.get("best_frame", q.get("before_frame"))
         if bf is not None:
             b = Image.open(f"{adir}/frames/{bf:04d}.jpg").convert("RGB")
@@ -231,8 +249,8 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(bf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((520, 520)), (40, 150))
-            dr.text((40, 130), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
+            card.paste(b.resize((side, side)), (40, img_y))
+            dr.text((40, label_y), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
         if q.get("now_frames"):
             nf = q["now_frames"][-1]
             lk = st.looks[nf]
@@ -246,11 +264,11 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(nf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((520, 520)), (680, 150))
-            dr.text((680, 130), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
+            card.paste(b.resize((side, side)), (680, img_y))
+            dr.text((680, label_y), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
         ev = q.get("evidence")
         if ev:
-            dr.text((30, 684), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
+            dr.text((30, img_y + side + 8), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
                     f"{ev['through']}, something there {ev['occupied']}", fill=(170, 170, 170), font=small)
         for _ in range(15 * 6):
             w.append_data(np.asarray(card))

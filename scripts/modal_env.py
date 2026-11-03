@@ -89,7 +89,8 @@ def compare(houses_file: str = "leaderboard_houses.json", brains: str = "spark,l
 render_image = (modal.Image.debian_slim(python_version="3.12").apt_install("ffmpeg", "fonts-dejavu-core")
                 .pip_install("imageio[ffmpeg]", "pillow", "numpy")
                 .add_local_file(os.path.join(os.path.dirname(__file__), "env_video.py"), "/scripts/env_video.py")
-                .add_local_file(os.path.join(os.path.dirname(__file__), "demo_cut.py"), "/scripts/demo_cut.py"))
+                .add_local_file(os.path.join(os.path.dirname(__file__), "demo_cut.py"), "/scripts/demo_cut.py")
+                .add_local_dir(SRC, "/pkg"))
 
 
 @app.function(image=render_image, volumes={"/data": vol}, cpu=4, memory=16384, timeout=3600)

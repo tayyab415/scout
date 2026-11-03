@@ -157,14 +157,14 @@ def test_viewpoint_is_reachable_close_and_has_line_of_sight():
     assert not m.blocked[ij[:, 0], ij[:, 1]].any()
 
 
-def test_recorded_sample_episode_scores_offline():
-    """A real recorded episode (examples/sample_episode) scores without a GPU, both arms correct."""
+def test_recorded_neighbour_chair_episode_is_scored_as_wrong_target():
+    """A real recorded episode where the unchanged check inspected a neighbouring chair: the scorer must not credit it."""
     import glob
     from scout.env.scoring import score_episode
     from scout.world.layout import Layout
-    d = os.path.join(ROOT, "examples/sample_episode")
+    d = os.path.join(ROOT, "tests/fixtures/neighbour_chair_episode")
     r = score_episode(d, Layout.load(glob.glob(d + "/layout_*.npz")[0]))
-    assert r["unchanged"]["verify"]["outcome"] == "correct" and r["moved"]["verify"]["outcome"] == "correct"
+    assert r["unchanged"]["verify"]["outcome"] == "wrong target" and r["moved"]["verify"]["outcome"] == "correct"
     assert 0 <= r["unchanged"]["quiz"]["accuracy"] <= 1 and r["unchanged"]["cite"]["cited"] > 0
 
 

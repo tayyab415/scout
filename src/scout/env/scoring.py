@@ -42,7 +42,25 @@ def truth_at(ev, t):
     return pos
 
 
-def score_verify(arm, log, mem=None, target=None, moves=None):
+def _bound_to_target(anchor, target, ev):
+    """The checked spot must belong to the frozen instance: within 1.5 m of it and nearer to it than to any other
+    instance of the same category (a neighbouring chair is a different chair)."""
+    if anchor is None:
+        return False
+    a = np.array(anchor, float)
+    d_t = float(np.linalg.norm(a - np.array(target["from_xy"])))
+    if d_t >= NEAR_M:
+        return False
+    if ev is None or "instance" not in target:
+        return True
+    for o in ev.get("objects_start", []):
+        if o["category"] == target["category"] and o["id"] != target["instance"]:
+            if float(np.linalg.norm(a - np.array(o["xy"]))) < d_t:
+                return False
+    return True
+
+
+def score_verify(arm, log, mem=None, target=None, moves=None, ev=None):
     """The body's verdict on the frozen question, bound to the frozen target. Ineligible when the moved arm did not
     actually move anything or the check inspected a different object."""
     ans = [q for q in log["qa"] if q["kind"] == "answer"]
@@ -60,8 +78,7 @@ def score_verify(arm, log, mem=None, target=None, moves=None):
         if anchor is None and tr is not None:
             pre = [S[i] for i in tr["sightings"] if S[i]["t"] <= target.get("t_freeze", 1e9)] or [S[tr["sightings"][0]]]
             anchor = pre[-1]["xyz"][:2]
-        if tr is None or tr["label"] != target["category"] or anchor is None or \
-                np.linalg.norm(np.array(anchor) - np.array(target["from_xy"])) >= NEAR_M:
+        if tr is None or tr["label"] != target["category"] or not _bound_to_target(anchor, target, ev):
             return dict(arm=arm, verdict=v, outcome="wrong target", say=a.get("say"))
     want = "still there" if arm == "unchanged" else "not found"
     outcome = "correct" if v == want else ("abstain" if v in ("unclear", "no check") else "wrong")
@@ -204,9 +221,9 @@ def score_episode(ep_dir: str, layout=None) -> dict:
         log, mem, ev = _load(f"{ep_dir}/{a}")
         r = dict(falls=log["falls"], got_up=log["got_up"], ended=log["ended"], checks=score_checks(log, mem, ev))
         if a in ("unchanged", "moved"):
-            r["verify"] = score_verify(a, log, mem, man.get("target"), ev.get("moves"))
+            r["verify"] = score_verify(a, log, mem, man.get("target"), ev.get("moves"), ev)
             if log.get("recall"):
-                r["verify_recall"] = score_verify(a, dict(qa=log["recall"]), mem, man.get("target"), ev.get("moves"))
+                r["verify_recall"] = score_verify(a, dict(qa=log["recall"]), mem, man.get("target"), ev.get("moves"), ev)
         if log.get("quiz"):
             r["quiz"] = score_quiz(log, mem, ev)
             r["cite"] = score_citations(log, mem, ev)
