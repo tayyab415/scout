@@ -34,6 +34,16 @@ class Track:
     def last_xy(self, mem: "Episodic") -> np.ndarray:
         return mem.sightings[self.sightings[-1]].xyz[:2]
 
+    def confident(self, mem: "Episodic") -> bool:
+        """Seen at least 3 times, from viewpoints at least 1 m apart, at a consistent place (spread < 0.5 m)."""
+        ss = [mem.sightings[i] for i in self.sightings]
+        if len(ss) < 3:
+            return False
+        views = np.array([s.body_xy for s in ss])
+        pos = np.array([s.xyz[:2] for s in ss])
+        spread = float(np.linalg.norm(pos - np.median(pos, 0), axis=1).mean())
+        return float(np.linalg.norm(views.max(0) - views.min(0))) >= 1.0 and spread < 0.5
+
 
 @dataclass
 class Episodic:
@@ -89,13 +99,13 @@ class Episodic:
 
     def table(self) -> str:
         """Plain-text memory for the language model: one line per remembered object, plus misses and verdicts."""
-        lines = ["object_id | object | first_seen_s | last_seen_s | times_seen | best_confidence | x_m | y_m | sighting_ids (first, best, last)"]
+        lines = ["object_id | object | first_seen_s | last_seen_s | times_seen | best_confidence | x_m | y_m | sighting_ids (first, best, last) | confident (3+ consistent sightings from 2+ viewpoints) or tentative"]
         for tr in self.tracks:
             ss = [self.sightings[i] for i in tr.sightings]
             best = max(ss, key=lambda s: s.score)
             ids = sorted({ss[0].id, best.id, ss[-1].id})
             lines.append(f"{tr.id} | {tr.label} | {ss[0].t:.1f} | {ss[-1].t:.1f} | {len(ss)} | {best.score:.2f} | "
-                         f"{best.xyz[0]:.1f} | {best.xyz[1]:.1f} | {ids}")
+                         f"{best.xyz[0]:.1f} | {best.xyz[1]:.1f} | {ids} | {'confident' if tr.confident(self) else 'tentative'}")
             for t, fr in tr.misses:
                 lines.append(f"{tr.id} | {tr.label} NOT seen at its last known place at t={t:.1f}s")
             if tr.status == "retracted":
