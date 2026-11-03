@@ -228,6 +228,19 @@ class Agent:
             tid = r.get("object_id")
             self.qa.append(dict(t=round(t, 3), kind="question", text=q, say=r.get("say", ""), object_id=tid))
             self.log(t, "question", text=q, say=r.get("say", ""), object_id=tid)
+            if getattr(self.brain, "recall", False) and isinstance(tid, int) and 0 <= tid < len(self.mem.tracks):
+                # memory-only baseline: answer from what it remembers, without going to look
+                tr = self.mem.tracks[tid]
+                res = "still there" if tr.status == "ok" else "not found"
+                last = self.mem.sightings[tr.sightings[-1]]
+                say = self.brain.phrase(q, f"a {tr.label} seen {len(tr.sightings)} times, last at t={last.t:.0f}s",
+                                        "answered from memory without checking: " + res)
+                self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, track=tid, from_memory=True,
+                                    anchor_xy=[round(float(v), 3) for v in tr.last_xy(self.mem)], before_frame=last.frame,
+                                    best_frame=max((self.mem.sightings[i] for i in tr.sightings), key=lambda s: s.score).frame,
+                                    now_frames=[]))
+                self.log(t, "answer", say=say, result=res, from_memory=True)
+                return
             if not (isinstance(tid, int) and 0 <= tid < len(self.mem.tracks) and self._start_check(tid, t, xy, "asked", q)):
                 self.qa.append(dict(t=round(t, 3), kind="answer", result="no check", say=r.get("say", "") or "I can't check that."))
             return

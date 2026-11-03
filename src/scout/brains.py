@@ -99,6 +99,8 @@ class RuleBrain:
             else {"object_id": None, "say": "I never saw one."}
 
     def phrase(self, question, remembered, finding):
+        if finding.startswith("answered from memory"):
+            return "Yes, it is where I saw it." if finding.endswith("still there") else "No, it is gone."
         if finding.startswith("unclear: something"):
             return "Something is still at that spot, but I could not recognise it."
         return {"still there": "I just saw it there again.", "not found": "I could not find it where I last saw it.",
@@ -140,6 +142,12 @@ class RandomBrain:
 
 
 def make_brain(name: str):
+    """'<brain>-recall' is the same brain answering verification questions from memory only, without walking back."""
+    if name.endswith("-recall"):
+        b = make_brain(name[: -len("-recall")])
+        b.recall = True
+        b.name = f"{b.name} + memory only (no physical check)"
+        return b
     if name in ("terra", "spark"):
         return LLMBrain(TERRA)
     if name in ("llama4", "llama"):
