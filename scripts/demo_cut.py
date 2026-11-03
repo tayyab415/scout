@@ -94,7 +94,7 @@ def main():
         cells = [c.strip() for c in row.strip("|").split("|")]
         for x, i in zip(xs, keep):
             txt = cells[i] if i < len(cells) else ""
-            for k, ln in enumerate(textwrap.wrap(txt, 16 if r == 0 else 22)[:3]):
+            for k, ln in enumerate(textwrap.wrap(txt, 16 if r == 0 else 22)[:4]):
                 dr.text((x, 110 + r * 100 + k * 22), ln, fill=(255, 255, 255) if r else (170, 170, 170), font=font(18 if r else 15))
     dr.text((40, 640), "verify columns: correct / abstain / wrong / other.  Full outcome breakdown and every failure: docs/results/",
             fill=(150, 150, 150), font=font(16))
