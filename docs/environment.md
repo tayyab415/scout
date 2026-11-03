@@ -101,3 +101,18 @@ SAM and no language model. Result on 3 Nov:
 - head images: 3 of 8 compared frames are identical; the others differ by at most 1 intensity level, in at most
   0.002% of pixels;
 - the policy and renderer run on the GPU, so traces are reproducible to rounding, not bit-for-bit.
+
+## Speed (measured 3 Nov)
+
+- **Episode speed.** One episode runs about 2.2× slower than real time on a Modal L40S. On an AWS g5.2xlarge
+  (A10G) it runs about 7× slower, with 2 episodes sharing the GPU.
+- **Where the time goes.** A py-spy profile of a running episode on the A10G (479 samples) puts 95.6% of the time
+  in SAM 3.1 detection, about 1% each in physics and policy and in the observer render, and under 0.5% in mapping
+  and planning.
+- **Why.** The eyes drive SAM 3.1's video predictor once per category: 16 one-frame sessions per look, each of
+  which re-encodes the image. FlashAttention 3 is unavailable on Ampere GPUs.
+- **Not yet applied:**
+  - encode each frame once and run all 16 text prompts on it;
+  - SAM 3.1's `torch.compile` mode, which its documentation says gives about 2×.
+
+  Both were left out so the frozen comparison kept one detection pipeline.
