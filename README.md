@@ -39,15 +39,16 @@ re-checks and answer questions. See `docs/environment.md` for the API, the tasks
 
 ## Run it
 
+Full setup from scratch is in `docs/setup.md`: accounts, the house download, skill vectors and every command.
+
 ```bash
-uv venv && uv pip install -e . modal boto3 pytest pillow imageio[ffmpeg]
-pytest -q tests                                     # CPU tests: map, memory, scorers, recording contract
-# Needs: Modal account (GPU L40S), HF access to facebook/sam3.1, AWS Bedrock access for the LLM brains,
-#        the MolmoSpaces ProcTHOR houses + layouts on the Modal volume (scripts/modal_layouts.py)
-modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain terra     # one episode, both arms
-modal run scripts/modal_env.py::compare --houses-file leaderboard_houses.json             # frozen brain comparison
-modal run scripts/modal_env.py::videos --tag cmp                                          # synchronised videos
-python scripts/score_env.py --tag cmp                                                      # leaderboard
+uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
+.venv/bin/python -m pytest -q tests                      # CPU only, includes three rounds of independent review tests
+# score a real recorded episode without a GPU: see docs/setup.md section 5 (examples/sample_episode)
+modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain rules     # one episode, both arms (GPU)
+modal run scripts/modal_env.py::compare --houses-file final2_houses.json --tag mytag      # frozen brain comparison
+modal run scripts/modal_env.py::score --tag mytag                                        # leaderboard
+modal run scripts/modal_env.py::videos --tag mytag                                       # synchronised videos
 ```
 
 ## License
