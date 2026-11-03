@@ -126,6 +126,10 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
             continue
         o = min(inst, key=lambda o: np.linalg.norm(np.array(o["xy"]) - p))
         far = np.linalg.norm(np.array(o["xy"]) - env.body.xy) >= 4.0 and o["id"] not in visible_now
+        # the question must name an identifiable object: no other instance of its category within 2.5 m
+        unique = all(np.linalg.norm(np.array(q["xy"]) - np.array(o["xy"])) > 2.5 for q in truth0
+                     if q["category"] == o["category"] and q["id"] != o["id"])
+        far = far and unique
         cand.append((len(tr.sightings), far, tr, o))
     cand = [c for c in cand if c[1]]
     manifest = dict(episode=ep, house=house, brain=agent.brain.name, seed=seed, explore_s=explore_s,
@@ -136,7 +140,7 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
     arms_out = {}
     if end != "time" or not cand:
         manifest["target"] = None
-        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (seen 3+ times, matched to a real instance, >= 4 m away, not in view)"
+        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)"
         log("no target:", manifest["no_target_reason"])
     else:
         n, _, tr, o = max(cand, key=lambda c: c[0])
