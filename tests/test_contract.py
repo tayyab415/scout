@@ -86,7 +86,7 @@ def test_agent_clock_has_no_extra_steps():
 def _fake_episode(d, arm, verdict, quiz=None, visible=None):
     a = f"{d}/{arm}"
     os.makedirs(a, exist_ok=True)
-    json.dump(dict(events=[], looks=[dict(t=0.0, frame=0, xy=[0, 0], yaw=0.0, dets=[])], qa=[dict(kind="question", text="q"),
+    json.dump(dict(events=[], looks=[dict(t=10.0, frame=0, xy=[0, 0], yaw=0.0, dets=[])], qa=[dict(kind="question", text="q"),
                    dict(kind="answer", result=verdict, say="x")], quiz=quiz or [], falls=0, got_up=0, ended=None, t_end=100.0),
               open(f"{a}/log.json", "w"))
     json.dump(dict(sightings=[dict(id=0, label="sofa", score=0.9, xyz=[1, 1, 0.5], t=10.0, frame=0, body_xy=[0, 0])],
@@ -117,4 +117,5 @@ def test_quiz_is_graded_against_what_the_camera_showed_not_what_the_house_contai
         q = score_quiz(log, mem, ev)
         assert [r["correct"] for r in q["rows"]] == [True, True, False]
         c = score_citations(log, mem, ev)
-        assert c == dict(cited=2, valid=1, invalid_id=1, future=0, not_visible=0)
+        assert (c["cited"], c["valid"], c["invalid_id"]) == (2, 1, 1)
+        assert (c["affirmative"], c["affirmative_supported"]) == (2, 1)

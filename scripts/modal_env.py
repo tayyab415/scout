@@ -83,8 +83,10 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
 
     def run_until(t_end, writer, times, stop=None):
         while env.t < t_end - 1e-9:
-            if env.k % LOOK_EVERY == 0:
-                vis.append(dict(t=round(env.t, 3), frame=len(agent.looks), visible=env.visible_instances()))
+            # evaluator visibility is rendered at the same instant as a possible head capture, but kept only if the
+            # agent really captured a frame on this tick (it does not while recovering from a fall)
+            pending = dict(t=round(env.t, 3), visible=env.visible_instances()) if env.k % LOOK_EVERY == 0 else None
+            n_looks = len(agent.looks)
             if env.k % 2 == 0:
                 writer.append_data(env.observer_view())
                 times.append(round(env.t, 3))
@@ -93,7 +95,11 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
                                  xy=[float(v) for v in env.body.xy], yaw=float(env.body.yaw),
                                  goal=None if agent.goal is None else [float(v) for v in agent.goal],
                                  check=None if agent.check is None else [float(v) for v in agent.check["xy"]]))
-            if not agent.tick(env):
+            alive = agent.tick(env)
+            if pending is not None and len(agent.looks) > n_looks:
+                lk = agent.looks[-1]
+                vis.append(dict(t=lk["t"], frame=lk["frame"], visible=pending["visible"]))
+            if not alive:
                 return "ended"
             if stop is not None and stop():
                 return "stopped"
@@ -146,13 +152,18 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
             if np.linalg.norm(p - np.array(o["xy"])) >= 4.0 and np.linalg.norm(p - env.body.xy) >= 6.0:
                 dest = p
                 break
-        question = f"Is the {tr.label} still where you last saw it?"
+        ref_t = agent.mem.sightings[tr.sightings[-1]].t  # agent-visible reference: its own sighting at this time
+        question = f"Is the {tr.label} you saw at {ref_t:.0f} s still where it was?"
         manifest["target"] = dict(instance=o["id"], category=o["category"], from_xy=o["xy"], track_at_freeze=tr.id,
+                                  t_freeze=round(env.t, 3), reference_sighting_t=round(ref_t, 3),
                                   sightings_at_freeze=n, dest_xy=None if dest is None else dest.round(3).tolist(),
                                   dest_room=None if dest is None else env.layout.room_at(dest).type, question=question)
         snap_env, snap_agent = env.snapshot(), copy.deepcopy(agent)
         snap_vis, snap_maps = copy.deepcopy(vis), copy.deepcopy(maps)
-        for arm in ("unchanged", "moved"):
+        arms = ("unchanged", "moved") if dest is not None else ("unchanged",)
+        if dest is None:
+            manifest["moved_arm_skipped"] = "no destination in another room >= 4 m from the object and >= 6 m from the body"
+        for arm in arms:
             env.restore(snap_env)
             agent = copy.deepcopy(snap_agent)
             vis[:], maps[:] = copy.deepcopy(snap_vis), copy.deepcopy(snap_maps)
@@ -170,7 +181,7 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
             else:
                 e2 = e1
             w.close()
-            qz = agent.quiz(PROMPTS) if (quiz and arm == "unchanged") else []
+            qz = agent.quiz(PROMPTS, t=round(env.t, 3)) if (quiz and arm == "unchanged") else []
             arms_out[arm] = dict(moved=moved, end=e2, qa=agent.qa, quiz=qz)
             adir = f"{out}/{arm}"
             os.makedirs(f"{adir}/frames", exist_ok=True)
@@ -193,14 +204,22 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
                                 **{f"walk_{i}": m["walk"] for i, m in enumerate(maps)})
             json.dump([dict(t=m["t"], goal=m["goal"], check=m["check"]) for m in maps], open(f"{adir}/map_meta.json", "w"))
             log(arm, "answer:", [q.get("say") for q in agent.qa if q["kind"] == "answer"])
-    if not arms_out:  # still save the exploration
+    if not arms_out:  # still save the whole exploration, with everything the video and scorer need
         adir = f"{out}/explore_only"
         os.makedirs(f"{adir}/frames", exist_ok=True)
         for lk in agent.looks:
             open(f"{adir}/frames/{lk['frame']:04d}.jpg", "wb").write(lk["jpg"])
         json.dump(dict(events=agent.events, looks=[{k: v for k, v in lk.items() if k != "jpg"} for lk in agent.looks],
-                       decisions=agent.decisions, falls=agent.falls, got_up=agent.got_up, ended=agent.ended,
-                       t_end=round(env.t, 3), observer_times_prefix=times), open(f"{adir}/log.json", "w"))
+                       decisions=agent.decisions, qa=agent.qa, quiz=[], falls=agent.falls, got_up=agent.got_up, ended=agent.ended,
+                       t_end=round(env.t, 3), observer_times_prefix=times, observer_times=[]), open(f"{adir}/log.json", "w"))
+        if agent.smap is not None:
+            m0 = agent.smap
+            np.savez_compressed(f"{adir}/maps.npz", shape=np.array(m0.floor.shape), origin=m0.origin, res=m0.res,
+                                t=np.array([m["t"] for m in maps]), xy=np.array([m["xy"] for m in maps]),
+                                yaw=np.array([m["yaw"] for m in maps]),
+                                **{f"seen_{i}": m["seen"] for i, m in enumerate(maps)},
+                                **{f"walk_{i}": m["walk"] for i, m in enumerate(maps)})
+            json.dump([dict(t=m["t"], goal=m["goal"], check=m["check"]) for m in maps], open(f"{adir}/map_meta.json", "w"))
         json.dump(agent.memory_dump(), open(f"{adir}/memory.json", "w"))
         json.dump(dict(objects_start=truth0, objects_end=env.truth_objects(), moves=env.moves, visibility=vis,
                        instances={i: dict(category=v["category"], key=v["key"]) for i, v in env.instances.items()}),
@@ -249,6 +268,8 @@ def render(tag: str, episode: str, arm: str) -> str:
     sys.path.insert(0, "/scripts")
     import env_video
     d = f"/data/scout/env/{tag}/{episode}"
+    if not os.path.exists(f"{d}/{arm}/log.json"):
+        return f"skip {episode}/{arm} (not in this episode)"
     out = f"{d}/{arm}.mp4"
     env_video.compose(d, arm, out)
     vol.commit()
@@ -262,9 +283,12 @@ def videos(tag: str = "cmp", episodes: str = ""):
     if episodes:
         eps = episodes.split(",")
     else:
-        ls = subprocess.run(["modal", "volume", "ls", "tribe-lab-claude", f"/scout/env/{tag}"], capture_output=True, text=True).stdout
-        eps = [ln.strip().split("/")[-1] for ln in ls.splitlines() if ln.strip()]
-    calls = [(e, a, render.spawn(tag, e, a)) for e in eps for a in ("unchanged", "moved")]
+        import json
+        r = subprocess.run(["modal", "volume", "ls", "--json", "tribe-lab-claude", f"/scout/env/{tag}"], capture_output=True, text=True)
+        if r.returncode != 0:
+            raise SystemExit(r.stderr[:300])
+        eps = [os.path.basename(x["filename"].rstrip("/")) for x in json.loads(r.stdout) if x.get("type", "dir") == "dir"]
+    calls = [(e, a, render.spawn(tag, e, a)) for e in eps for a in ("unchanged", "moved", "explore_only")]
     for e, a, c in calls:
         try:
             print("VIDEO", c.get())

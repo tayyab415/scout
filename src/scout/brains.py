@@ -54,10 +54,13 @@ class LLMBrain:
                                inferenceConfig={"maxTokens": 3000})
                 text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
                 m = re.search(r"\{.*\}", text, re.S)
-                return json.loads(m.group(0)) if m else {}
-            except Exception:
+                if not m:
+                    return {"_error": "no JSON in reply", "_raw": text[:500]}
+                return json.loads(m.group(0))
+            except Exception as e:  # provider or parse failure: report it, never turn it into an answer
+                err = f"{type(e).__name__}: {str(e)[:200]}"
                 time.sleep(2)
-        return {}
+        return {"_error": err}
 
     def decide(self, table, state):
         d = self._call(_mind.SYSTEM, f"Memory:\n{table}\n\nNow:\n{state}")

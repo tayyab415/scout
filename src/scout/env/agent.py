@@ -258,8 +258,13 @@ class Agent:
             elif np.linalg.norm(to) < 1.6:
                 self.path, c["turn"] = np.zeros((0, 2)), (1 if rel > 0 else -1)
             else:
+                # step toward the spot through the planner (keeps obstacle clearance); if no path, turn on the spot
                 step_to = xy + to / np.linalg.norm(to) * min(1.0, np.linalg.norm(to) - 1.5)
-                self._set_goal(np.array([xy, step_to]), t)
+                p = self.smap.path(xy, step_to, goal_radius=0.3)
+                if len(p) >= 2:
+                    self._set_goal(p, t)
+                else:
+                    self.path, c["turn"] = np.zeros((0, 2)), (1 if rel > 0 else -1)
         done = c["arrived"] is not None and (t - c["arrived"] >= 4.5 or (c["hits"] and t - c["arrived"] >= 1.5))
         if done or t - c["t0"] > 40:
             if c["hits"]:
@@ -270,7 +275,8 @@ class Agent:
             else:
                 res = "unclear"
             self.log(t, "check_result", track=c["tid"], label=tr.label, result=res, status=tr.status, hits=c["hits"],
-                     through=c["through"], occupied=c["occupied"], views=c["views"], question=c["question"])
+                     through=c["through"], occupied=c["occupied"], views=c["views"], question=c["question"],
+                     t_start=round(c["t0"], 3), anchor_xy=[round(float(v), 3) for v in c["xy"]])
             if c["question"]:
                 remembered = f"a {tr.label} seen {c['n_before']} times, last at t={c['before_t']:.0f}s"
                 finding = {"still there": "still there", "not found": "not found", "unclear": "unclear"}[res]
@@ -278,6 +284,7 @@ class Agent:
                     finding = "unclear: something is still at that exact spot, but I could not recognise it as the " + tr.label
                 say = self.brain.phrase(c["question"], remembered, finding)
                 self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, track=c["tid"],
+                                    anchor_xy=[round(float(v), 3) for v in c["xy"]], t_start=round(c["t0"], 3),
                                     before_frame=c["before_frame"], best_frame=c["best_frame"], now_frames=c["frames"][-3:],
                                     evidence=dict(hits=c["hits"], through=c["through"], occupied=c["occupied"], views=c["views"])))
                 self.log(t, "answer", say=say, result=res)
@@ -370,15 +377,22 @@ class Agent:
             self.ended = "physics_invalid"
         return ok
 
-    def quiz(self, prompts) -> list[dict]:
+    def quiz(self, prompts, t: float | None = None) -> list[dict]:
+        self.t_now = t
         out = []
         for cat in prompts:
             q = f"Did you see a {cat}? If so, where was it?"
             a = self.brain.answer(self.mem.table(), q) or {}
+            valid = isinstance(a.get("observed"), bool) and "_error" not in a
             oid = a.get("object_id")
             xy = self.mem.tracks[oid].last_xy(self.mem).tolist() if isinstance(oid, int) and 0 <= oid < len(self.mem.tracks) else None
-            out.append(dict(category=cat, question=q, answer=a.get("answer", ""), observed=bool(a.get("observed")),
-                            object_id=oid, xy=xy, cited=[c for c in a.get("cited_sightings", []) if isinstance(c, int)]))
+            cited = a.get("cited_sightings", [])
+            cited = cited if isinstance(cited, list) else []
+            out.append(dict(t=self.t_now, category=cat, question=q, answer=a.get("answer", ""),
+                            observed=bool(a.get("observed")) if valid else None, valid=valid, error=None if valid else a.get("_error", "invalid reply"),
+                            raw={k: v for k, v in a.items() if k != "_raw"} if valid else a,
+                            object_id=oid, xy=xy, cited=[c for c in cited if isinstance(c, int)],
+                            malformed_citations=[c for c in cited if not isinstance(c, int)]))
         return out
 
     def memory_dump(self) -> dict:
