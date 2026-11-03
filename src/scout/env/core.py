@@ -85,14 +85,32 @@ class ScoutEnv:
 
     def visible_instances(self) -> dict:
         """Which object instances cover >= VISIBLE_FRAC of the head image right now: {instance_id: fraction}."""
-        if not hasattr(self, "_seg_rd"):  # its own renderer: sharing one with depth rendering garbles the ids
-            self._seg_rd = self.mj.Renderer(self.M, SIZE, SIZE)
-            self._seg_rd.enable_segmentation_rendering()
+        mj = self.mj
+        if not hasattr(self, "_seg_rd"):
+            self._seg_rd = mj.Renderer(self.M, SIZE, SIZE)
         rd = self._seg_rd
         rd.update_scene(self.D, camera="eye")
-        seg = rd.render()
-        gid = seg[..., 0]
-        isg = (seg[..., 1] == int(self.mj.mjtObj.mjOBJ_GEOM)) & (gid >= 0)
+        # MuJoCo's own decoder indexes a table of size ngeom+1 and crashes on ids it does not expect (blended edge
+        # pixels in this model). Render the id colours ourselves and treat unknown ids as background.
+        sc = rd._scene
+        flags = sc.flags.copy()
+        sc.flags[mj.mjtRndFlag.mjRND_SEGMENT] = True
+        sc.flags[mj.mjtRndFlag.mjRND_IDCOLOR] = True
+        rd._gl_context.make_current()
+        mj.mjr_render(rd._rect, sc, rd._mjr_context)
+        img = np.empty((SIZE, SIZE, 3), np.uint8)
+        mj.mjr_readPixels(img, None, rd._rect, rd._mjr_context)
+        sc.flags[:] = flags
+        segid = img[..., 0].astype(np.int64) + img[..., 1].astype(np.int64) * 256 + img[..., 2].astype(np.int64) * 65536
+        segid = segid[::-1]  # OpenGL rows start at the bottom
+        table = {g.segid + 1: (g.objid, g.objtype) for g in sc.geoms[:sc.ngeom] if g.segid != -1}
+        gid = np.full(segid.shape, -1)
+        isg = np.zeros(segid.shape, bool)
+        for sid in np.unique(segid):
+            o = table.get(int(sid))
+            if o is not None and o[1] == int(mj.mjtObj.mjOBJ_GEOM):
+                m = segid == sid
+                gid[m], isg[m] = o[0], True
         inst = np.full(gid.shape, -1)
         inst[isg] = self.body_instance[self.M.geom_bodyid[gid[isg]]]
         ids, counts = np.unique(inst[inst >= 0], return_counts=True)
