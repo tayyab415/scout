@@ -117,7 +117,7 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
     visible_now = env.visible_instances()
     cand = []
     for tr in agent.mem.tracks:
-        if tr.label not in MOVABLE or tr.status != "ok" or not tr.confident(agent.mem):
+        if tr.label not in MOVABLE or tr.status != "ok" or len(tr.sightings) < 3:  # the evaluator checks it is real
             continue
         p = tr.last_xy(agent.mem)
         inst = [o for o in truth0 if o["category"] == tr.label and np.linalg.norm(np.array(o["xy"]) - p) < 1.5]
@@ -135,7 +135,7 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
     arms_out = {}
     if end != "time" or not cand:
         manifest["target"] = None
-        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (confident, matched, >= 4 m away, not in view)"
+        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (seen 3+ times, matched to a real instance, >= 4 m away, not in view)"
         log("no target:", manifest["no_target_reason"])
     else:
         n, _, tr, o = max(cand, key=lambda c: c[0])
