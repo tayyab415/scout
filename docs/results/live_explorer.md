@@ -70,3 +70,55 @@ In run `mind180b` (val_935, 180 s), 8 checks were started by the mind. Scored ag
 - **The moved TV:** the evaluator moved it at 50 s, but the body never returned to that room. The evaluator now
   moves only objects that are out of view and more than 6 m away. After exploring, the mind re-checks the objects
   it has not seen for longest.
+
+## Robustness batch 2 (fixes in, mind on, the same 5 houses)
+
+- 5/5 ran the full 600 s. There were 2 falls; both times it got up on its own (holding Motivo's stand skill).
+- Floor seen: 44 / 99 / 72 / 49 / 100%, up from 16 / 44 / 21 / 26 / 92%. Rooms visited: 3/10, 6/8, 4/10, 2/4, 4/4.
+- These houses informed the fixes, so this is regression evidence, not generalisation.
+
+## 20 untouched held-out houses × 10 min (mind off) — generalisation
+
+| Measure | Result |
+| --- | --- |
+| Ran the full 600 s | 20/20 |
+| Falls, got up on its own | 6, 6 |
+| Floor seen | median 95%, mean 79%, range 12-100% |
+| Rooms visited | 61/96; all rooms in 5/20 houses |
+| Confident objects (3+ sightings) within 1.5 m of a real one of that type | 361/446 (81%) |
+| Tentative objects (1-2 sightings) | 89/194 (46%) |
+
+## Self-triggered checks by the mind (batch 2, all 5 houses)
+
+- 123 checks were started and 121 finished. 39 reached a verdict; 25 of those were correct (64% of decided, 21% of
+  finished). 14 real objects were wrongly declared gone.
+- The moved object was noticed spontaneously in 0/3 runs. The body did not go back to the old place.
+
+## Question-triggered verification (house val_935, one trial each)
+
+Asked at 300 s: "Is the television still where you last saw it?" The body chooses the remembered object, the
+route and the viewpoint itself.
+
+- **Unchanged:** "I remembered seeing the television there before, and I just saw it there again." Correct.
+- **Moved** (by the evaluator to the bathroom at 150 s): "I couldn't find it where I last saw it." Correct.
+  Then, asked "Then find it.": "I walked through the places I know and did not see one." The search failed.
+- **An earlier unchanged trial** said "couldn't get a clear look". The check ignored detections more than 5 m
+  away; fixed.
+
+## Frontier experiment: does V-JEPA 2 see failure coming? (`scripts/modal_failure.py`)
+
+- **Data:** the 20 untouched runs, one head-camera look every 0.5 s.
+- **Label:** a stuck or fall event in the next 4 s (base rate 3.7%).
+- **Split:** 15 houses train, 5 test. Logistic regression; the regularisation strength was chosen on training
+  houses only.
+
+| Features | Test AUC | Test average precision |
+| --- | --- | --- |
+| Recent motion (speed over 1 s and 2 s, turn rate, command, head height) | 0.956 | 0.39 |
+| Frozen V-JEPA 2 ViT-L on the last two head frames | 0.507 | 0.07 |
+| Both | 0.559 | 0.11 |
+
+- **Result: negative.** Frozen V-JEPA 2 features did not predict this body's failures, and adding them to motion
+  made predictions worse.
+- **Caveat:** "stuck" is defined by lack of progress, so the motion baseline partly sees the label coming. Even
+  so, V-JEPA alone is at chance.
