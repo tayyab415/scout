@@ -118,7 +118,7 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
         if not inst:
             continue
         o = min(inst, key=lambda o: np.linalg.norm(np.array(o["xy"]) - p))
-        far = np.linalg.norm(np.array(o["xy"]) - env.body.xy) >= 6.0 and o["id"] not in visible_now
+        far = np.linalg.norm(np.array(o["xy"]) - env.body.xy) >= 4.0 and o["id"] not in visible_now
         cand.append((len(tr.sightings), far, tr, o))
     cand = [c for c in cand if c[1]]
     manifest = dict(episode=ep, house=house, brain=agent.brain.name, seed=seed, explore_s=explore_s,
@@ -129,7 +129,7 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
     arms_out = {}
     if end != "time" or not cand:
         manifest["target"] = None
-        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (confident, matched, >= 6 m away, not in view)"
+        manifest["no_target_reason"] = "episode ended early" if end != "time" else "no eligible movable object (confident, matched, >= 4 m away, not in view)"
         log("no target:", manifest["no_target_reason"])
     else:
         n, _, tr, o = max(cand, key=lambda c: c[0])
