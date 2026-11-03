@@ -51,7 +51,7 @@ The body walks to a viewpoint 2-3 m from the remembered spot and turns to face i
 1. **Reset and explore.** Reset with the seed and explore for `explore_s` (240 s). The brain decides re-checks
    every 20 s and on events.
 2. **Freeze the target (evaluator).** It is the movable object instance the agent has seen most. It must match a
-   confident memory track within 1.5 m, be at least 4 m from the body, and not be in view. If no instance
+   memory track seen at least 3 times, within 1.5 m, be at least 4 m from the body, and not be in view. If no instance
    qualifies, the episode records `no_target_reason` and stops.
 3. **Freeze the question.** It is fixed before branching: "Is the <category> still where you last saw it?".
 4. **Pick a destination.** It is in a different room, at least 4 m from the source and 6 m from the body.
