@@ -294,3 +294,41 @@ def videos(tag: str = "cmp", episodes: str = ""):
             print("VIDEO", c.get())
         except Exception as ex:
             print("VIDEO", e, a, "FAILED", type(ex).__name__, str(ex)[:200])
+
+
+@app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=1800, secrets=secrets)
+def replay_check(house: str = "procthor-10k-val_val_935", steps: int = 120) -> dict:
+    """Branch replay proof: from one snapshot, run the same deterministic action sequence twice and compare the
+    physics state and head images step by step. No SAM, no language model."""
+    import hashlib
+    import sys
+
+    import numpy as np
+    sys.path.insert(0, "/pkg")
+    from scout.env.core import ScoutEnv
+    env = ScoutEnv(house, 0, eyes=None)
+    env.reset()
+    Z = env.Z
+    for _ in range(60):
+        env.step(Z["move-ego-0-1"])
+    snap = env.snapshot()
+    seq = [Z["move-ego-0-1"] if (i // 30) % 2 == 0 else Z["move-ego-90-1"] for i in range(steps)]
+    traces = []
+    for rep in range(2):
+        env.restore(snap)
+        q, imgs = [], []
+        for i, z in enumerate(seq):
+            env.step(z)
+            q.append(env.D.qpos.copy())
+            if i % 15 == 0:
+                imgs.append(hashlib.sha256(env.observe()["rgb"].tobytes()).hexdigest()[:16])
+        traces.append((np.array(q), imgs, env.t))
+    dq = float(np.abs(traces[0][0] - traces[1][0]).max())
+    return dict(house=house, steps=steps, max_abs_qpos_diff=dq, images_equal=traces[0][1] == traces[1][1],
+                n_images=len(traces[0][1]), t_end=[traces[0][2], traces[1][2]])
+
+
+@app.local_entrypoint()
+def replay(house: str = "procthor-10k-val_val_935"):
+    import json
+    print(json.dumps(replay_check.remote(house), indent=1))
