@@ -51,7 +51,7 @@ def _aws_env() -> dict:
 secrets.append(modal.Secret.from_dict(_aws_env()))
 # objects the evaluator may move during a run (disclosed test of stale memory): prompt -> THOR body-name prefixes
 MOVABLE = {"floor lamp": ["floorlamp"], "armchair": ["armchair"], "television": ["television"], "laptop": ["laptop"],
-           "house plant": ["houseplant"], "sofa": ["sofa"], "dresser": ["dresser", "chestofdrawers"]}
+           "sofa": ["sofa"], "dresser": ["dresser", "chestofdrawers"], "chair": ["chair"]}
 
 PROMPTS = ["bed", "sofa", "television", "dining table", "fridge", "kitchen counter", "chair", "armchair",
            "floor lamp", "painting", "laptop", "toilet", "sink", "dresser", "bathtub", "house plant"]
@@ -166,8 +166,12 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     qa, qa_state, q_track, check_frames, search_q = [], "", None, [], []
 
     def viewpoint_path(obj):
-        """Path to a spot 2.5 m from obj on the near side, so it arrives facing the object."""
+        """Path to a spot 2-3 m from obj, so it arrives looking at the object. Already close: approach directly."""
         away = body.xy - obj
+        if np.linalg.norm(away) < 4.0:
+            p = smap.path(body.xy, obj + 2.0 * away / (np.linalg.norm(away) + 1e-6), goal_radius=0.6)
+            if len(p) >= 2:
+                return p
         base = math.atan2(away[1], away[0])
         for dang in (0, 0.6, -0.6, 1.2, -1.2, 2.0, -2.0):
             for rr in (2.5, 2.0, 3.0):
@@ -186,7 +190,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     z = Z["move-ego-0-0"].clone()
     path, prog, goal = np.zeros((0, 2)), 0, None
     last_xy, last_move_t, fell, falls, best_gd, banned, checks_done = body.xy, 0.0, False, 0, 1e9, [], {}
-    last_rel = None
+    last_rel, turn_dir = None, 0
     n_steps = int(seconds * 30)
     for k in range(n_steps):
         t = k / 30.0
@@ -371,8 +375,17 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             if mode == "check":
                 tr = mem.tracks[check_tid]
                 near = len(path) and np.linalg.norm(body.xy - path[-1]) < 0.5
-                if arrived_t is None and (near or stuck):
-                    arrived_t, path = t, np.zeros((0, 2))
+                if arrived_t is None and (near or stuck or len(path) < 2):
+                    # turn to face the remembered spot before looking: walk a short step toward it if needed
+                    to = check_xy - body.xy
+                    rel_o = wrap_deg(math.degrees(math.atan2(to[1], to[0]) - body.yaw))
+                    if abs(rel_o) < 25 or t - check_t0 > 30:
+                        arrived_t, path, turn_dir = t, np.zeros((0, 2)), 0
+                    elif np.linalg.norm(to) < 1.6:
+                        path, turn_dir = np.zeros((0, 2)), (1 if rel_o > 0 else -1)  # too close to step: turn on the spot
+                    else:
+                        step_to = body.xy + to / np.linalg.norm(to) * min(1.0, np.linalg.norm(to) - 1.5)
+                        path, prog, goal, best_gd, last_move_t = np.array([body.xy, step_to]), 0, step_to, 1e9, t
                 need = 2 if len(tr.sightings) < 2 else 3  # a confident object needs more evidence before it is "gone"
                 if arrived_t is not None and (t - arrived_t >= 4.5 or (check_hits and t - arrived_t >= 1.5)) or t - check_t0 > 40:
                     if check_hits:
@@ -448,6 +461,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
             rel = wrap_deg(math.degrees(math.atan2(d[1], d[0]) - body.yaw)) if np.linalg.norm(d) > 0.05 else 0.0
             zt = target_z(rel)
             last_rel = rel
+        elif mode == "check" and turn_dir and arrived_t is None:
+            zt = Z["yaw-L-2-free"] if turn_dir > 0 else Z["yaw-R-2-free"]
         elif mode == "check" or qa_state == "done":
             zt = Z["move-ego-0-0"]  # arrived (or finished answering): stand and look
         else:
