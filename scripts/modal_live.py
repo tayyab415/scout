@@ -110,7 +110,7 @@ def move_object(mujoco, body, mem, lay, rng, t, in_view=(), only_label=""):
 @app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=5400, secrets=secrets)
 def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "", mind: bool = False,
              mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
-             question: str = "", find: bool = False):
+             question: str = "", find: bool = False, brain_name: str = "terra", quiz: bool = False):
     import io
     import json
     import math
@@ -125,7 +125,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     from scout.body.follow import lookahead, wrap_deg
     from scout.body.motivo import MotivoBody
     from scout.memory.episodic import Episodic
-    from scout.mind import ask_mind, phrase_answer, resolve_question
+    from scout.brains import make_brain
+    brain = make_brain(brain_name)
     from scout.perception.sam import Sam31
     from scout.perception.selfmap import SelfMap, depth_to_points
     from scout.world.grid import descend, geodesic
@@ -267,7 +268,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                             others = [tr for tr in mem.tracks if tr.label == lab and tr.status == "ok"]
                             finding = (f"found elsewhere: a {lab} at x={sx.xyz[0]:.1f}, y={sx.xyz[1]:.1f} (t={t:.0f}s); "
                                        f"the old place was checked and it was not there; {len(others)} {lab} objects in memory")
-                            say = phrase_answer("Then find it.", f"a {lab} last seen at its old place", finding)
+                            say = brain.phrase("Then find it.", f"a {lab} last seen at its old place", finding)
                             qa.append(dict(t=t, kind="answer", result="found elsewhere", say=say, now_frames=[frame_id],
                                            sighting=sx.id))
                             events.append(dict(t=t, kind="answer", say=say))
@@ -319,7 +320,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         [tr for tr in mem.tracks if tr.label in MOVABLE and tr.status == "ok"] or mem.tracks,
                         key=lambda tr: len(tr.sightings)).label
                     question = question.replace("{label}", lab)
-                res_q = resolve_question(mem.table(), question)
+                res_q = brain.resolve(mem.table(), question)
                 tid = res_q.get("object_id")
                 qa.append(dict(t=t, kind="question", text=question, say=res_q.get("say", ""), object_id=tid))
                 events.append(dict(t=t, kind="question", text=question, say=res_q.get("say", "")))
@@ -353,7 +354,9 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                          "; recent events: " +
                          "; ".join(f"{e['kind']} {e.get('label', '')} at {e['t']:.0f}s" for e in events[-6:]
                                    if e["kind"] in ("expected_not_seen", "check_result", "stuck")))
-                dec, lat = ask_mind(mem.table(), state)
+                _t = time.time()
+                dec = brain.decide(mem.table(), state)
+                lat = time.time() - _t
                 decisions.append(dict(t=t, decision=dec, latency_s=round(lat, 1), state=state))
                 events.append(dict(t=t, kind="mind", decision=dec))
                 next_mind_t, mind_due = t + mind_every, False
@@ -401,7 +404,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         ss0 = mem.sightings[[i for i in tr.sightings if mem.sightings[i].t <= check_t0][-1]]
                         remembered = f"a {tr.label} seen {len(tr.sightings)} times, last at t={ss0.t:.0f}s (frame {ss0.frame})"
                         finding = {"still there": "still there", "not there": "not found", "could not tell": "unclear"}[res]
-                        say = phrase_answer(question, remembered, finding)
+                        say = brain.phrase(question, remembered, finding)
                         qa.append(dict(t=t, kind="answer", result=finding, say=say, before_frame=ss0.frame,
                                        now_frames=check_frames[-3:]))
                         events.append(dict(t=t, kind="answer", say=say))
@@ -506,6 +509,17 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
     follow_w.close()
     head_w.close()
 
+    # memory quiz (remember task): one question per category; the scorer grades it against the truth
+    quiz_out = []
+    if quiz:
+        for cat in PROMPTS:
+            q = f"Did you see a {cat}? If so, where was it?"
+            a = brain.answer(mem.table(), q)
+            oid = a.get("object_id")
+            xy = mem.tracks[oid].last_xy(mem).tolist() if isinstance(oid, int) and 0 <= oid < len(mem.tracks) else None
+            quiz_out.append(dict(category=cat, question=q, answer=a.get("answer", ""), observed=bool(a.get("observed")),
+                                 object_id=oid, xy=xy, cited=a.get("cited_sightings", [])))
+
     # save the body's memory and log (agent side) and the truth (evaluator side) separately
     np.savez_compressed(f"{out}/maps.npz", shape=np.array(smap.floor.shape), origin=smap.origin, res=smap.res,
                         **{f"seen_{i}": m["seen"] for i, m in enumerate(maps)},
@@ -522,8 +536,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                    start=start.tolist(), events=events, looks=looks, prompts=PROMPTS,
                    perception="RGB-D head camera, SAM 3.1 open weights; perfect odometry from the simulator",
                    explorer="nearest reachable frontier on the self-built map (rule, no language model)",
-                   mind=("GPT-6.1 Terra (Bedrock) as stand-in for Muse Spark" if mind else "off"), decisions=decisions,
-                   qa=qa),
+                   mind=(brain.name if mind else "off"), decisions=decisions,
+                   qa=qa, brain=brain.name, quiz=quiz_out),
               open(f"{out}/log.json", "w"))
     truth = dict(objects=[dict(type=o.type, xy=np.asarray(o.xy).tolist(), room=o.room) for o in lay.objects],
                  rooms=[dict(id=r.id, type=r.type) for r in lay.rooms], evaluator_events=evaluator)
@@ -535,7 +549,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                    walked_waypoints=sum(e["kind"] == "new_waypoint" for e in events),
                    stuck=sum(e["kind"] == "stuck" for e in events), minutes=round((time.time() - t0) / 60, 1),
                    mind_calls=len(decisions), checks=[{k: e[k] for k in ("t", "label", "result", "status")} for e in events if e["kind"] == "check_result"],
-                   evaluator=evaluator, qa=[{k: v for k, v in q.items() if k in ("t", "kind", "text", "say", "result")} for q in qa])
+                   evaluator=evaluator, brain=brain.name, quiz_n=len(quiz_out), qa=[{k: v for k, v in q.items() if k in ("t", "kind", "text", "say", "result")} for q in qa])
     log(summary)
     return summary
 
@@ -543,8 +557,31 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
 @app.local_entrypoint()
 def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: int = 0, run_name: str = "",
          mind: bool = False, mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
-         question: str = "", find: bool = False):
-    print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at, move_label, ask_at, question, find))
+         question: str = "", find: bool = False, brain: str = "terra", quiz: bool = False):
+    print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at, move_label, ask_at, question, find,
+                          brain, quiz))
+
+
+@app.local_entrypoint()
+def leaderboard(houses_file: str = "leaderboard_houses.json", brains: str = "terra,llama4,rules,random",
+                tag: str = "lb", seconds: float = 420.0, ask_at: float = 300.0, move_at: float = 150.0):
+    """Every brain on the same held-out houses, same seeds: explore, self-checks, a verify question with the asked-about
+    object moved by the evaluator in odd-numbered houses and left alone in even ones, then a memory quiz."""
+    import json
+    houses = json.load(open(os.path.join(CFG, houses_file)))
+    q = "Is the {label} still where you last saw it?"
+    calls = []
+    for b in brains.split(","):
+        for i, h in enumerate(houses):
+            mv = move_at if i % 2 == 1 else -1.0
+            calls.append((b, h, live_run.spawn(h, seconds, 0, f"{tag}_{b}_{h}", True, 20.0, mv, "auto" if mv >= 0 else "",
+                                               ask_at, q, False, b, True)))
+    for b, h, c in calls:
+        try:
+            r = c.get()
+            print("LB", b, h, json.dumps({k: r[k] for k in ("seconds_run", "falls", "got_up", "stuck", "evaluator", "qa", "checks")}))
+        except Exception as e:
+            print("LB", b, h, "CRASHED", type(e).__name__, str(e)[:300])
 
 
 @app.local_entrypoint()
