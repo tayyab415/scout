@@ -17,7 +17,8 @@ import os
 import modal
 
 app = modal.App("scout-env")
-vol = modal.Volume.from_name("tribe-lab-claude")
+VOLUME = os.environ.get("SCOUT_VOLUME", "tribe-lab-claude")
+vol = modal.Volume.from_name(VOLUME, create_if_missing=True)
 SRC = os.path.join(os.path.dirname(__file__), "..", "src")
 CFG = os.path.join(os.path.dirname(__file__), "..", "configs")
 image = (modal.Image.debian_slim(python_version="3.12")
@@ -291,7 +292,7 @@ def videos(tag: str = "cmp", episodes: str = ""):
         eps = episodes.split(",")
     else:
         import json
-        r = subprocess.run(["modal", "volume", "ls", "--json", "tribe-lab-claude", f"/scout/env/{tag}"], capture_output=True, text=True)
+        r = subprocess.run(["modal", "volume", "ls", "--json", VOLUME, f"/scout/env/{tag}"], capture_output=True, text=True)
         if r.returncode != 0:
             raise SystemExit(r.stderr[:300])
         eps = [os.path.basename(x["filename"].rstrip("/")) for x in json.loads(r.stdout) if x.get("type", "dir") == "dir"]

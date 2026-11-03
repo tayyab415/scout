@@ -8,7 +8,7 @@ import os
 import modal
 
 app = modal.App("scout-layouts")
-vol = modal.Volume.from_name("tribe-lab-claude")
+vol = modal.Volume.from_name(os.environ.get("SCOUT_VOLUME", "tribe-lab-claude"), create_if_missing=True)
 ROOT = "/data/house"
 SRC = os.path.join(os.path.dirname(__file__), "..", "src")
 image = (modal.Image.debian_slim(python_version="3.11")
