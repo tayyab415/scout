@@ -86,3 +86,12 @@ The body walks to a viewpoint 2-3 m from the remembered spot and turns to face i
   - `maps.npz` and `map_meta.json`;
   - `frames/*.jpg`: every head frame.
 - `<arm>.mp4`: the synchronised three-panel video with evidence cards (`scripts/env_video.py`).
+
+## Branch replay check (`modal run scripts/modal_env.py::replay`)
+
+The check takes one snapshot in house val_935, then runs the same 120-step action sequence twice from it, with no
+SAM and no language model. Result on 3 Nov:
+- body state: maximum qpos difference 3.9e-12;
+- head images: 3 of 8 compared frames are identical; the others differ by at most 1 intensity level, in at most
+  0.002% of pixels;
+- the policy and renderer run on the GPU, so traces are reproducible to rounding, not bit-for-bit.

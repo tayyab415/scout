@@ -306,7 +306,6 @@ def videos(tag: str = "cmp", episodes: str = ""):
 def replay_check(house: str = "procthor-10k-val_val_935", steps: int = 120) -> dict:
     """Branch replay proof: from one snapshot, run the same deterministic action sequence twice and compare the
     physics state and head images step by step. No SAM, no language model."""
-    import hashlib
     import sys
 
     import numpy as np
@@ -327,11 +326,16 @@ def replay_check(house: str = "procthor-10k-val_val_935", steps: int = 120) -> d
             env.step(z)
             q.append(env.D.qpos.copy())
             if i % 15 == 0:
-                imgs.append(hashlib.sha256(env.observe()["rgb"].tobytes()).hexdigest()[:16])
+                imgs.append(env.observe()["rgb"].astype(np.int16))
         traces.append((np.array(q), imgs, env.t))
     dq = float(np.abs(traces[0][0] - traces[1][0]).max())
-    return dict(house=house, steps=steps, max_abs_qpos_diff=dq, images_equal=traces[0][1] == traces[1][1],
-                n_images=len(traces[0][1]), t_end=[traces[0][2], traces[1][2]])
+    pix = [np.abs(a - b) for a, b in zip(traces[0][1], traces[1][1])]
+    # same state, rendered twice: is the renderer itself deterministic?
+    r1, r2 = env.observe()["rgb"].astype(np.int16), env.observe()["rgb"].astype(np.int16)
+    return dict(house=house, steps=steps, max_abs_qpos_diff=dq, n_images=len(pix),
+                images_identical=sum(int(p.max() == 0) for p in pix),
+                max_pixel_diff=[int(p.max()) for p in pix], frac_pixels_differing=[round(float((p > 0).mean()), 5) for p in pix],
+                same_state_rerender_max_diff=int(np.abs(r1 - r2).max()), t_end=[traces[0][2], traces[1][2]])
 
 
 @app.local_entrypoint()
