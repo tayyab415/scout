@@ -28,6 +28,7 @@ MIX_RIGHT = ([18, 33, 85, 122], [0.0, 0.25, 0.5, 0.75])
 LOOK_EVERY, DETECT_EVERY = 15, 30                         # steps: map every 0.5 s, SAM 3.1 every 1 s
 THROUGH_M = 0.2       # depth past the remembered spot that counts as "seeing through" it (ideal simulated depth)
 CHECK_TIMEOUT_S = 75  # walking there, turning to face it, and looking
+HIT_M = 0.6           # a re-detection counts for the remembered object only within this distance of its spot
 
 
 def canonical_answer(result: str, label: str, before_t: float, occupied: bool = False) -> str:
@@ -125,20 +126,40 @@ class Agent:
             return np.array([sm.pos(q) for q in reversed(path)])
         return np.zeros((0, 2))
 
+    def _approach_path(self, xy, obj):
+        """No viewpoint yet: path to the reachable cell nearest to obj (often across a doorway it only looked through)."""
+        sm = self.smap
+        wk = sm.planning_mask(xy)
+        c = sm.cell(xy)
+        dist = geodesic(wk, [c], sm.res)
+        fin = np.argwhere(np.isfinite(dist))
+        if len(fin) < 2:
+            return np.zeros((0, 2))
+        pos = sm.origin + (fin + 0.5) * sm.res
+        best = tuple(fin[int(np.argmin(np.linalg.norm(pos - obj, axis=1)))])
+        if best == c:
+            return np.zeros((0, 2))
+        cells = descend(geodesic(wk, [best], sm.res), c)
+        return np.array([sm.pos(q) for q in cells]) if len(cells) >= 2 else np.zeros((0, 2))
+
     def _start_check(self, tid, t, xy, why, question=None):
         obj = self.mem.tracks[tid].last_xy(self.mem).copy()
         p = self._viewpoint_path(xy, obj)
+        approach = False
         if len(p) < 2 and not (1.2 <= np.linalg.norm(obj - xy) <= 3.5):
-            self.log(t, "check_unreachable", track=tid, label=self.mem.tracks[tid].label)
-            return False
+            p = self._approach_path(xy, obj)
+            approach = len(p) >= 2
+            if not approach:
+                self.log(t, "check_unreachable", track=tid, label=self.mem.tracks[tid].label)
+                return False
         last = self.mem.sightings[self.mem.tracks[tid].sightings[-1]]
         best = max((self.mem.sightings[i] for i in self.mem.tracks[tid].sightings), key=lambda s: s.score)
         self.check = dict(tid=tid, t0=t, xy=obj, xyz=last.xyz.copy(), arrived=None, turn=0, hits=0, through=0,
                           occupied=0, views=0, frames=[], question=question, n_before=len(self.mem.tracks[tid].sightings),
-                          before_frame=last.frame, before_t=last.t, best_frame=best.frame)
+                          before_frame=last.frame, before_t=last.t, best_frame=best.frame, approach=approach)
         self.mode = "check"
         self._set_goal(p, t)
-        self.log(t, "check_start", track=tid, label=self.mem.tracks[tid].label, why=why, question=question)
+        self.log(t, "check_start", track=tid, label=self.mem.tracks[tid].label, why=why, question=question, approach=approach)
         return True
 
     def ask(self, question: str):
@@ -215,8 +236,10 @@ class Agent:
         c = self.check
         if c is not None and c["arrived"] is not None:
             trc = self.mem.tracks[c["tid"]]
-            hit = any(d["label"] == trc.label and (d["track"] == trc.id or
-                      np.linalg.norm(self.mem.sightings[d["sighting"]].xyz[:2] - c["xy"]) < 1.5) for d in look["dets"])
+            # instance level: a detection of the same category within 0.6 m of the remembered spot (a neighbouring
+            # chair 0.8 m away is a different chair)
+            hit = any(d["label"] == trc.label and np.linalg.norm(self.mem.sightings[d["sighting"]].xyz[:2] - c["xy"]) < HIT_M
+                      for d in look["dets"])
             pc = cm.T @ (c["xyz"] - cp)
             if pc[2] < -0.3:
                 dd = -pc[2]
@@ -231,6 +254,10 @@ class Agent:
                         c["through"] += 1   # the camera sees past where the object was
                     elif abs(med - dd) <= THROUGH_M:
                         c["occupied"] += 1  # something is at that spot
+                        # ... and SAM boxed that exact pixel as the same category: it is the remembered object
+                        if any(d["label"] == trc.label and d["box"][0] <= u <= d["box"][2] and d["box"][1] <= v <= d["box"][3]
+                               for d in look["dets"]):
+                            hit = True
                         if not hit and env.eyes is not None:
                             # look closer: SAM 3.1 on a zoomed crop around the spot, asked only for this category
                             half = 128
@@ -302,6 +329,19 @@ class Agent:
         c = self.check
         tr = self.mem.tracks[c["tid"]]
         near = len(self.path) >= 2 and np.linalg.norm(xy - self.path[-1]) < 0.5
+        if c["approach"] and c["arrived"] is None and (near or stuck or len(self.path) < 2):
+            # reached the closest reachable spot (the map has grown on the way): look for a real viewpoint now
+            p = self._viewpoint_path(xy, c["xy"])
+            if len(p) >= 2:
+                c["approach"] = False
+                self._set_goal(p, t)
+                self.log(t, "viewpoint_found", track=c["tid"])
+                return
+            p = self._approach_path(xy, c["xy"])
+            if len(p) >= 2 and t - c["t0"] < CHECK_TIMEOUT_S - 15:
+                self._set_goal(p, t)
+                return
+            c["approach"] = False  # cannot get closer: look from here
         if c["arrived"] is None and (near or stuck or len(self.path) < 2):
             to = c["xy"] - xy
             rel = wrap_deg(math.degrees(math.atan2(to[1], to[0]) - yaw))
