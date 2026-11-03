@@ -236,3 +236,37 @@ def compare(houses_file: str = "leaderboard_houses.json", brains: str = "terra,l
             print("EP", b, h, json.dumps({"target": r["manifest"].get("target"), "answers": r["answers"]}))
         except Exception as e:
             print("EP", b, h, "CRASHED", type(e).__name__, str(e)[:400])
+
+
+render_image = (modal.Image.debian_slim(python_version="3.12").apt_install("ffmpeg", "fonts-dejavu-core")
+                .pip_install("imageio[ffmpeg]", "pillow", "numpy")
+                .add_local_file(os.path.join(os.path.dirname(__file__), "env_video.py"), "/scripts/env_video.py"))
+
+
+@app.function(image=render_image, volumes={"/data": vol}, cpu=4, memory=16384, timeout=3600)
+def render(tag: str, episode: str, arm: str) -> str:
+    import sys
+    sys.path.insert(0, "/scripts")
+    import env_video
+    d = f"/data/scout/env/{tag}/{episode}"
+    out = f"{d}/{arm}.mp4"
+    env_video.compose(d, arm, out)
+    vol.commit()
+    return out
+
+
+@app.local_entrypoint()
+def videos(tag: str = "cmp", episodes: str = ""):
+    """Render the moved and unchanged videos for every episode of a tag (or a comma list of episodes)."""
+    import subprocess
+    if episodes:
+        eps = episodes.split(",")
+    else:
+        ls = subprocess.run(["modal", "volume", "ls", "tribe-lab-claude", f"/scout/env/{tag}"], capture_output=True, text=True).stdout
+        eps = [ln.strip().split("/")[-1] for ln in ls.splitlines() if ln.strip()]
+    calls = [(e, a, render.spawn(tag, e, a)) for e in eps for a in ("unchanged", "moved")]
+    for e, a, c in calls:
+        try:
+            print("VIDEO", c.get())
+        except Exception as ex:
+            print("VIDEO", e, a, "FAILED", type(ex).__name__, str(ex)[:200])
