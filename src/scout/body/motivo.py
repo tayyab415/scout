@@ -45,7 +45,7 @@ class MotivoBody:
         p0, R0 = u.data.xpos[pid].copy(), u.data.xmat[pid].reshape(3, 3).copy()
         o = self.torch.tensor(u.get_obs()["proprio"].reshape(1, -1), dtype=self.torch.float32, device=self.device)
         for _ in range(60):
-            a = self.model.act(o, self.Z["move-ego-0-1"], mean=True).cpu().numpy().ravel()
+            a = self.model.act(o, self.Z["move-ego-0-1"], mean=True).float().cpu().numpy().ravel()
             env.step(a)
             o = self.torch.tensor(u.get_obs()["proprio"].reshape(1, -1), dtype=self.torch.float32, device=self.device)
         d = u.data.xpos[pid][:2] - p0[:2]
@@ -80,8 +80,25 @@ class MotivoBody:
         self.u.set_physics(q, np.zeros(self.M.nv))
 
     def step(self, skill: str) -> None:
-        a = self.model.act(self._obs(), self.Z[skill], mean=True).cpu().numpy().ravel()
+        a = self.model.act(self._obs(), self.Z[skill], mean=True).float().cpu().numpy().ravel()
         self.env.step(a)
+
+    def step_z(self, z) -> None:
+        """One 30 Hz control step with an arbitrary skill vector (for blending and mixing)."""
+        a = self.model.act(self._obs(), z.reshape(1, -1), mean=True).float().cpu().numpy().ravel()
+        self.env.step(a)
+
+    def head_rgbd(self, size: int = 512):
+        """Head camera colour, depth (metres along the view axis), camera position and rotation matrix."""
+        rd = self._renderer(size, size)
+        rd.update_scene(self.D, camera="eye")
+        rgb = rd.render().copy()
+        rd.enable_depth_rendering()
+        rd.update_scene(self.D, camera="eye")
+        depth = rd.render().copy()
+        rd.disable_depth_rendering()
+        cid = self.mj.mj_name2id(self.M, self.mj.mjtObj.mjOBJ_CAMERA, "eye")
+        return rgb, depth, self.D.cam_xpos[cid].copy(), self.D.cam_xmat[cid].reshape(3, 3).copy()
 
     # --- cameras ------------------------------------------------------------------------------------
     def _renderer(self, h: int, w: int):
