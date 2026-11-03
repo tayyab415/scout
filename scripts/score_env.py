@@ -77,7 +77,7 @@ def main():
     for s in scores:
         by[s["plan_brain"]].append(s)
     lines = ["| brain | episodes planned | completed | target frozen | verify unchanged (correct / abstain / wrong / other) | "
-             "verify moved (correct / abstain / wrong / other) | memory-only answer, unchanged / moved (correct) | quiz accuracy (errors) | affirmative answers with valid evidence | "
+             "verify moved (correct / abstain / wrong / other) | memory-persistence rule, unchanged / moved (correct) | quiz accuracy (errors) | affirmative answers with valid evidence | "
              "own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for b, ss in sorted(by.items()):

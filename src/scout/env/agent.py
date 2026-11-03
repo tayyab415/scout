@@ -28,6 +28,17 @@ MIX_RIGHT = ([18, 33, 85, 122], [0.0, 0.25, 0.5, 0.75])
 LOOK_EVERY, DETECT_EVERY = 15, 30                         # steps: map every 0.5 s, SAM 3.1 every 1 s
 
 
+def canonical_answer(result: str, label: str, before_t: float, occupied: bool = False) -> str:
+    """The spoken answer is a fixed rendering of the body's scored verdict, so the demo and the score always agree."""
+    if result == "still there":
+        return f"Yes. I saw the {label} there at {before_t:.0f} s, and I just saw it there again."
+    if result == "not found":
+        return f"I saw the {label} there at {before_t:.0f} s. I could not find it there now: the spot is empty."
+    if occupied:
+        return f"Something is still where the {label} was, but I could not recognise it as the {label}."
+    return f"I could not get a clear look at where the {label} was."
+
+
 class Agent:
     def __init__(self, brain, mind: bool = True, mind_every: float = 20.0):
         self.brain, self.mind, self.mind_every = brain, mind, mind_every
@@ -228,12 +239,14 @@ class Agent:
             self.log(t, "question", text=q, say=r.get("say", ""), object_id=tid)
             if getattr(self.brain, "recall", False) and isinstance(tid, int) and 0 <= tid < len(self.mem.tracks):
                 # memory-only baseline: answer from what it remembers, without going to look
+                # memory-persistence rule: the brain picked the object; the verdict is "whatever memory says now"
                 tr = self.mem.tracks[tid]
                 res = "still there" if tr.status == "ok" else "not found"
                 last = self.mem.sightings[tr.sightings[-1]]
-                say = self.brain.phrase(q, f"a {tr.label} seen {len(tr.sightings)} times, last at t={last.t:.0f}s",
-                                        "answered from memory without checking: " + res)
+                say = (f"From memory, without looking: the {tr.label} should still be there (last seen at {last.t:.0f} s)."
+                       if res == "still there" else f"From memory, without looking: the {tr.label} is gone.")
                 self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, track=tid, from_memory=True,
+                                    rule="memory persistence (no model call for the verdict)",
                                     anchor_xy=[round(float(v), 3) for v in tr.last_xy(self.mem)], before_frame=last.frame,
                                     best_frame=max((self.mem.sightings[i] for i in tr.sightings), key=lambda s: s.score).frame,
                                     now_frames=[]))
@@ -293,8 +306,9 @@ class Agent:
                 finding = {"still there": "still there", "not found": "not found", "unclear": "unclear"}[res]
                 if res == "unclear" and c["occupied"] >= 2:
                     finding = "unclear: something is still at that exact spot, but I could not recognise it as the " + tr.label
-                say = self.brain.phrase(c["question"], remembered, finding)
-                self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, track=c["tid"],
+                brain_say = self.brain.phrase(c["question"], remembered, finding)
+                say = canonical_answer(res, tr.label, c["before_t"], c["occupied"] >= 2)  # what is shown = what is scored
+                self.qa.append(dict(t=round(t, 3), kind="answer", result=res, say=say, brain_say=brain_say, track=c["tid"],
                                     anchor_xy=[round(float(v), 3) for v in c["xy"]], t_start=round(c["t0"], 3),
                                     before_frame=c["before_frame"], best_frame=c["best_frame"], now_frames=c["frames"][-3:],
                                     evidence=dict(hits=c["hits"], through=c["through"], occupied=c["occupied"], views=c["views"])))
@@ -394,12 +408,13 @@ class Agent:
         for cat in prompts:
             q = f"Did you see a {cat}? If so, where was it?"
             a = self.brain.answer(self.mem.table(), q) or {}
-            valid = isinstance(a.get("observed"), bool) and "_error" not in a
+            valid = isinstance(a.get("observed"), bool) and isinstance(a.get("answer"), str) and bool(a.get("answer", "").strip()) \
+                and "_error" not in a
             oid = a.get("object_id")
             xy = self.mem.tracks[oid].last_xy(self.mem).tolist() if isinstance(oid, int) and 0 <= oid < len(self.mem.tracks) else None
             cited = a.get("cited_sightings", [])
             cited = cited if isinstance(cited, list) else []
-            out.append(dict(t=self.t_now, category=cat, question=q, answer=a.get("answer", ""),
+            out.append(dict(t=self.t_now, category=cat, question=q, answer=a.get("answer") if isinstance(a.get("answer"), str) else "",
                             observed=bool(a.get("observed")) if valid else None, valid=valid, error=None if valid else a.get("_error", "invalid reply"),
                             raw={k: v for k, v in a.items() if k != "_raw"} if valid else a,
                             object_id=oid, xy=xy, cited=[c for c in cited if isinstance(c, int)],

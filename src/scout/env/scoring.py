@@ -84,7 +84,14 @@ def score_quiz(log, mem, ev):
         vis = sorted({int(i) for v in vis_rows if v["t"] <= t_q for i in v["visible"] if cats[int(i)] == c})
         observable = bool(vis)
         pos = truth_at(ev, t_q)
-        if q.get("error") or q.get("valid") is False:
+        # the agent marks every reply valid/invalid when it records it; records without that flag need a boolean
+        # "observed" (and, if they carry an answer, a non-empty string)
+        if "valid" in q:
+            well_formed = q["valid"] is True and not q.get("error")
+        else:
+            well_formed = isinstance(q.get("observed"), bool) and (
+                "answer" not in q or (isinstance(q["answer"], str) and bool(q["answer"].strip())))
+        if not well_formed:
             rows.append(dict(category=c, observable=observable, said_seen=None, located=None, correct=False, error=True))
             continue
         said = bool(q["observed"])
@@ -112,17 +119,21 @@ def score_citations(log, mem, ev):
     cats = {int(i): d["category"] for i, d in ev["instances"].items()}
     out = dict(cited=0, valid=0, invalid_id=0, future=0, wrong_category=0, not_visible=0,
                affirmative=0, affirmative_supported=0)
+    look_t = {lk["frame"]: lk["t"] for lk in log.get("looks", [])}
     for q in log.get("quiz") or []:
         t_q = q.get("t") if q.get("t") is not None else log["t_end"]
         cat = q["category"]
         supported = False
+        bad = q.get("malformed_citations", [])
+        out["cited"] += len(bad)
+        out["invalid_id"] += len(bad)
         for sid in q.get("cited", []):
             out["cited"] += 1
             s = S.get(sid) if isinstance(sid, int) else None
             if s is None:
                 out["invalid_id"] += 1
-            elif s["t"] > t_q:
-                out["future"] += 1
+            elif s["t"] > t_q or look_t.get(s["frame"], float("inf")) > t_q:
+                out["future"] += 1  # the sighting, or the frame it claims to come from, is later than the question
             elif s["label"] != cat:
                 out["wrong_category"] += 1
             elif not any(cats[int(i)] == cat for i in vis_by_frame.get(s["frame"], {})):
@@ -130,7 +141,7 @@ def score_citations(log, mem, ev):
             else:
                 out["valid"] += 1
                 supported = True
-        if q.get("observed") and not q.get("error"):
+        if q.get("observed") is True and not q.get("error"):
             out["affirmative"] += 1
             out["affirmative_supported"] += int(supported)
     return out
