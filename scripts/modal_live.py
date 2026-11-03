@@ -267,11 +267,13 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                             break
                 if mode == "check" and arrived_t is not None:
                     trc = mem.tracks[check_tid]
-                    uv = next((uv for tr, uv in mem.expected_in_view(cp, cm, FOVY, depth, max_range=5.0) if tr is trc), None)
-                    hit = uv is not None and any(
-                        d["label"] == trc.label and d["box"][0] - 40 <= uv[0] <= d["box"][2] + 40 and d["box"][1] - 40 <= uv[1] <= d["box"][3] + 40
+                    uv = next((uv for tr, uv in mem.expected_in_view(cp, cm, FOVY, depth, max_range=9.0) if tr is trc), None)
+                    hit = any(d["label"] == trc.label and (
+                        d["track"] == trc.id
+                        or np.linalg.norm(mem.sightings[d["sighting"]].xyz[:2] - check_xy) < 1.5
+                        or (uv is not None and d["box"][0] - 40 <= uv[0] <= d["box"][2] + 40 and d["box"][1] - 40 <= uv[1] <= d["box"][3] + 40))
                         for d in look["dets"])
-                    check_views += int(uv is not None)
+                    check_views += int(uv is not None or hit)
                     check_hits += int(hit)
                     check_frames.append(frame_id)
                 head_w.append_data(rgb)
