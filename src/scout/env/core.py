@@ -42,7 +42,7 @@ class ScoutEnv:
         from ..world.layout import Layout
         self.mj, self.house, self.seed = mujoco, house, seed
         self.body = MotivoBody(root, house, skills, device="cuda", eye_pitch_deg=EYE_PITCH)
-        self.body.M.vis.global_.offwidth, self.body.M.vis.global_.offheight = 640, 640
+        self.body.M.vis.global_.offwidth, self.body.M.vis.global_.offheight = 1280, 960
         self.M, self.D = self.body.M, self.body.D
         self.Z = self.body.Z
         self.eyes = eyes
