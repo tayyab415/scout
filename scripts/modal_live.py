@@ -71,7 +71,7 @@ def move_object(mujoco, body, mem, lay, rng, t, in_view=(), only_label=""):
     M, D = body.M, body.D
     names = [mujoco.mj_id2name(M, mujoco.mjtObj.mjOBJ_BODY, b) or "" for b in range(M.nbody)]
     for tr in sorted(mem.tracks, key=lambda tr: -len(tr.sightings)):
-        if tr.label not in MOVABLE or len(tr.sightings) < 2 or (only_label and tr.label != only_label):
+        if tr.label not in MOVABLE or len(tr.sightings) < 2 or (only_label not in ("", "auto") and tr.label != only_label):
             continue
         xy = tr.last_xy(mem)
         if np.linalg.norm(xy - body.xy) < 6.0 or tr in in_view:
@@ -305,6 +305,12 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
 
             # a person asks a question about its memory (after it explored on its own): it goes and checks
             if ask_at >= 0 and t >= ask_at and not qa_state and mode != "check":
+                if "{label}" in question:
+                    # name the object the evaluator moved, or (unchanged runs) the most-seen movable object it knows
+                    lab = evaluator[0]["label"] if evaluator else max(
+                        [tr for tr in mem.tracks if tr.label in MOVABLE and tr.status == "ok"] or mem.tracks,
+                        key=lambda tr: len(tr.sightings)).label
+                    question = question.replace("{label}", lab)
                 res_q = resolve_question(mem.table(), question)
                 tid = res_q.get("object_id")
                 qa.append(dict(t=t, kind="question", text=question, say=res_q.get("say", ""), object_id=tid))
@@ -386,6 +392,7 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                         if qa_state == "search":
                             search_q = sorted({tuple(np.round(np.array(lk["xy"]) / 2.5).astype(int)) for lk in looks})
                             search_q = [np.array(c) * 2.5 for c in search_q if np.linalg.norm(np.array(c) * 2.5 - check_xy) > 3.0]
+                            search_q = [f for f, n in smap.frontiers()] + search_q  # unexplored openings first
                             qa.append(dict(t=t, kind="question", text="Then find it."))
                             events.append(dict(t=t, kind="search_start", label=tr.label))
                     last_check_tid, mode, check_tid, arrived_t, goal = check_tid, "explore", None, None, None
@@ -394,7 +401,8 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                 # look for it: walk to the places it has been (2.5 m grid of its own trail), nearest first
                 if goal is None or np.linalg.norm(body.xy - goal) < 0.8 or stuck:
                     while search_q:
-                        nxt = min(search_q, key=lambda q: np.linalg.norm(q - body.xy))
+                        nxt = search_q[0] if len(search_q) and any(np.array_equal(search_q[0], f) for f, _ in smap.frontiers()) \
+                            else min(search_q, key=lambda q: np.linalg.norm(q - body.xy))
                         search_q = [q for q in search_q if q is not nxt]
                         p = smap.path(body.xy, nxt, goal_radius=0.6)
                         if len(p) >= 2:
@@ -518,6 +526,25 @@ def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: i
          mind: bool = False, mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
          question: str = "", find: bool = False):
     print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at, move_label, ask_at, question, find))
+
+
+@app.local_entrypoint()
+def qa_batch(houses_file: str = "qa_houses.json", tag: str = "qa", seconds: float = 480.0, ask_at: float = 300.0,
+             move_at: float = 150.0):
+    """Each house twice: the asked-about object moved by the evaluator, and unchanged. Every run is kept."""
+    import json
+    houses = json.load(open(os.path.join(CFG, houses_file)))
+    q = "Is the {label} still where you last saw it?"
+    calls = []
+    for h in houses:
+        calls.append((h, "moved", live_run.spawn(h, seconds, 0, f"{tag}_moved_{h}", True, 20.0, move_at, "auto", ask_at, q, True)))
+        calls.append((h, "same", live_run.spawn(h, seconds, 0, f"{tag}_same_{h}", True, 20.0, -1.0, "", ask_at, q, True)))
+    for h, kind, c in calls:
+        try:
+            r = c.get()
+            print("QA", h, kind, json.dumps({"evaluator": r["evaluator"], "qa": r["qa"], "falls": r["falls"]}))
+        except Exception as e:
+            print("QA", h, kind, "CRASHED", type(e).__name__, str(e)[:300])
 
 
 @app.local_entrypoint()
