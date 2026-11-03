@@ -64,24 +64,29 @@ def main():
         for _ in range(n if n is not None else int(secs * FPS)):
             w.append_data(img)
 
-    put(mv_card, 12)
+    put(mv_card, 10)
     tgt = man.get("target") or {}
     put(card(["Scout", "Can a robot tell what it knows from what it needs to check?",
               "A physics-simulated humanoid (Meta Motivo) in a home it has never seen. Eyes: SAM 3.1. Brain: plug in yours.",
               f"House {man['house']}  |  brain: {man['brain']}"], [64, 34, 26, 22],
              [(255, 210, 90), (235, 235, 235), (200, 200, 200), (150, 150, 150)]), 6)
-    for i, f in enumerate(ru):      # exploration (shared by both arms), 3x
+    speed = max(1, int(np.ceil(n_prefix / (FPS * 25))))  # about 25 s of exploration on screen
+    for i, f in enumerate(ru):      # exploration (shared by both arms), sped up and labelled
         if i >= n_prefix:
             break
-        if i % 3 == 0:
-            w.append_data(f)
+        if i % speed == 0:
+            im = Image.fromarray(f)
+            d = ImageDraw.Draw(im)
+            d.rectangle([W - 230, 44, W - 10, 84], fill=(0, 0, 0))
+            d.text((W - 220, 50), f"{speed}x playback", fill=(255, 210, 90), font=font(26))
+            w.append_data(np.asarray(im))
     for i, f in enumerate(rm):      # the hidden move, the question, the walk back, the look: real time
         if i >= nm - card_len:
             break
         if i >= n_prefix:
             w.append_data(f)
-    put(mv_card, 10)
-    put(un_card, 10)
+    put(mv_card, 9)
+    put(un_card, 9)
     rows = [ln for ln in open(a.leaderboard).read().splitlines() if ln.startswith("| ") and "---" not in ln][:5]
     cols = [c.strip() for c in rows[0].strip("|").split("|")]
     keep = [i for i, c in enumerate(cols) if c.startswith(("brain", "episodes planned", "verify unchanged", "verify moved",
@@ -94,18 +99,26 @@ def main():
         cells = [c.strip() for c in row.strip("|").split("|")]
         for x, i in zip(xs, keep):
             txt = cells[i] if i < len(cells) else ""
-            for k, ln in enumerate(textwrap.wrap(txt, 16 if r == 0 else 22)[:4]):
-                dr.text((x, 110 + r * 100 + k * 22), ln, fill=(255, 255, 255) if r else (170, 170, 170), font=font(18 if r else 15))
+            for k, ln in enumerate(textwrap.wrap(txt, 15 if r == 0 else 22)[:6]):
+                dr.text((x, 100 + (r * 90 + (40 if r else 0)) + k * 19), ln, fill=(255, 255, 255) if r else (170, 170, 170),
+                        font=font(18 if r else 14))
     dr.text((40, 640), "verify columns: correct / abstain / wrong / other.  Full outcome breakdown and every failure: docs/results/",
             fill=(150, 150, 150), font=font(16))
-    put(np.asarray(im), 20)
+    put(np.asarray(im), 16)
+    put(card(["Plug in your own brain",
+              "class MyBrain:  decide(memory, state)   resolve(memory, question)   phrase(question, remembered, finding)   answer(memory, question)",
+              "modal run scripts/modal_env.py::compare --brains mybrain,rules --houses-file final3_houses.json --tag mine",
+              "Score a recorded episode on a laptop, no GPU: examples/sample_episode (docs/setup.md, section 5)",
+              "github.com/tayyab415/scout"], [34, 20, 20, 22, 30],
+             [(255, 210, 90), (200, 230, 255), (200, 230, 255), (220, 220, 220), (255, 210, 90)]), 9)
     put(card(["What is real and what is given",
               "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
               "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
               "'Not found' means the depth camera now sees past the remembered spot. It never claims to have seen the move.",
               "Muse Spark 1.3 stands in for Muse Spark until the Meta Model API key is available.",
-              "The memory-persistence answer is a rule: whatever memory says, without looking."],
-             [34, 22, 22, 22, 22, 22]), 15)
+              "The memory-persistence answer is a rule: whatever memory says, without looking.",
+              "Targets are objects with no look-alike within 2.5 m, so the question names one identifiable object."],
+             [34, 22, 22, 22, 22, 22, 22]), 11)
     w.close()
     print("wrote", a.out)
 

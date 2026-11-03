@@ -1,23 +1,33 @@
 # 3-minute demo script
 
-Opening line: **"Can a robot tell what it knows from what it needs to check? Plug in a brain and find out."**
+Opening line: **"Can a robot verify what it remembers?"**
 
-All clips are rendered from real episodes. Every number on screen comes from `runs/env/final/leaderboard.md`.
+`scripts/demo_cut.py` assembles the video, under 3:00, from one recorded episode. Every clip is a real recording;
+every number comes from the final leaderboard (`final3`). The narrator records the voice over the cut.
 
-| Time | On screen | Voice-over (read as written, or adapt) | Source file |
-| --- | --- | --- | --- |
-| 0:00-0:15 | Observer view of the humanoid walking into an unseen house; title card | "This is Scout. A physics-simulated human, Meta Motivo, is dropped into a home it has never seen. No map, no list of objects. It only has a head camera." | `final/<episode>/unchanged.mp4`, first 15 s |
-| 0:15-0:45 | Three panels: body, head camera with SAM 3.1 boxes, the map it builds itself | "SAM 3.1 tells it what it is looking at. Depth from the same camera builds its own map. Everything it remembers is pinned where it saw it, with the frame it saw it in." | same, 30-60 s |
-| 0:45-1:05 | A fall and recovery, if the final runs include one (otherwise skip) | "It can fall. When it does, it gets itself back up." | episode with a `got_up` event |
-| 1:05-1:20 | Caption "[evaluator, hidden from the agent] moved the television" | "Then we change the world while it isn't looking. In one copy of the episode we move an object. In the other copy, branched from the exact same moment, we leave it." | `moved.mp4` at the move time |
-| 1:20-1:50 | The question appears. The body walks back and looks | "Then we ask: is the television you saw earlier still where it was?" | `moved.mp4` around the question |
-| 1:50-2:15 | Evidence cards: memory-only answer vs checked answer, moved and unchanged | "Answering from memory, the brain says yes, it's there. That's a stale answer. Going back to check, it says it couldn't find it where it last saw it, because its depth camera now sees past that spot. In the unchanged copy it says it just saw it there again. A brain that always says 'gone' can't score well." | evidence cards at the end of `moved.mp4` and `unchanged.mp4` |
-| 2:15-2:45 | Leaderboard table | "Any brain plugs in. On eight homes it had never seen, here is how Muse Spark 1.3 (our stand-in for Muse Spark), Llama 4, a rule baseline and random compare: on checking, on memory questions with cited frames, and on staying up." | `runs/env/final/leaderboard.md` |
-| 2:45-3:00 | Disclosure card | "Exploration uses a fixed rule. Depth and pose come from the simulator. Every failure is in the repo. Body: Meta Motivo. Eyes: SAM 3.1. Brain: plug in yours." | README |
+| Time (approx.) | On screen | Voice-over (read as written, or adapt) |
+| --- | --- | --- |
+| 0:00-0:10 | Evidence card, moved arm: what it remembered, and what it saw when it went back | "This robot saw a sofa here. Then, while it wasn't looking, we moved it. Watch what happens when we ask about it." |
+| 0:10-0:16 | Title card | "This is Scout: an environment where a physics-simulated humanoid explores homes it has never seen." |
+| 0:16-0:41 | Exploration, three panels, labelled "N× playback" | "The body is Meta Motivo, in full physics. SAM 3.1 recognises objects in its head camera. It builds its own map from depth and pins each object it sees, with the frame it saw it in." |
+| 0:41-1:40 | The hidden move (on-screen caption), the question, the walk back, the look, in real time | "We branch the episode: in one copy we move the object, in the other we leave it. Then we ask: is it still where you saw it? The brain picks which memory the question is about. The body walks back, turns to face the spot, and looks." |
+| 1:40-1:58 | Both evidence cards, coloured by the scorer | "Answering from memory alone, a fixed persistence rule, it says yes, it's still there. That's stale. After looking, it says it couldn't find it, because its depth camera now sees past that spot. In the copy where nothing moved, it says it just saw it there again." |
+| 1:58-2:14 | Leaderboard: correct, abstain and wrong counts with denominators | "Any brain plugs in. On eight homes it had never seen: memory-quiz accuracy, answers backed by the right frame, and how often checking was correct, abstained or wrong." |
+| 2:14-2:23 | Plug-in card: the interface, the compare command, the GPU-free scoring command, the URL | "Four methods make a brain. One command compares brains. Recorded episodes score on a laptop." |
+| 2:23-2:34 | Disclosure card | "Exploration is a fixed rule. Depth and pose come from the simulator. Muse Spark 1.3 stands in for Muse Spark. Every failure is in the repo." |
+
+## Who decides what (say it this way)
+
+- **The body's check decides "still there", "not found" or "unclear".** Fixed rules on SAM 3.1 detections and depth:
+  "not found" needs the depth camera to see past the remembered spot.
+- **The brain** (Muse Spark 1.3, standing in for Muse Spark) **decides** when to re-check during exploration and
+  which remembered object a question is about. It also answers the memory quiz, citing frames.
+- **The memory-only answer is a rule, not the brain:** whatever memory says, without looking.
+- **Targets** are objects with no other object of the same kind within 2.5 m, so the question names one
+  identifiable object.
 
 ## What must stay true on screen
 
-- Say "Muse Spark 1.3, standing in for Muse Spark". Do not relabel Muse Spark results as Muse Spark.
-- Say exploration is a fixed rule. The brain decides re-checks and answers.
-- "Not found" means the spot is now empty. Never say it "detected that the object was moved".
-- Use the numbers from the final leaderboard, including the abstentions and errors.
+- Never relabel Muse Spark as Muse Spark.
+- "Not found" never means "it detected the move".
+- Use the final leaderboard's numbers, including abstentions, wrong targets and episodes that did not run.
