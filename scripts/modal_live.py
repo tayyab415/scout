@@ -221,12 +221,16 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
                             continue
                         front = np.percentile(dvals[ok], 30)
                         ok &= np.abs(dvals - front) < 0.4
+                        if ok.sum() < 10:
+                            continue
                         h = depth.shape[0]
                         f = (h / 2) / math.tan(math.radians(FOVY) / 2)
                         x = (us[ok] + 0.5 - h / 2) / f * dvals[ok]
                         y = -(vs[ok] + 0.5 - h / 2) / f * dvals[ok]
                         pc = np.stack([x, y, -dvals[ok]], 1) @ cm.T + cp
                         xyz = np.median(pc, 0)
+                        if not np.isfinite(xyz).all():
+                            continue
                         s, tr, new = mem.add(label, score, xyz, t, frame_id, body.xy)
                         seen_labels.add(label)
                         bb = [int(us.min()), int(vs.min()), int(us.max()), int(vs.max())]
