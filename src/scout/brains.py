@@ -96,6 +96,8 @@ class RuleBrain:
             else {"object_id": None, "say": "I never saw one."}
 
     def phrase(self, question, remembered, finding):
+        if finding.startswith("unclear: something"):
+            return "Something is still at that spot, but I could not recognise it."
         return {"still there": "I just saw it there again.", "not found": "I could not find it where I last saw it.",
                 "unclear": "I could not get a clear look."}.get(finding, finding)
 
