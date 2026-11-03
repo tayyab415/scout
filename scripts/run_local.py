@@ -43,14 +43,17 @@ def main():
     ap.add_argument("--explore-s", type=float, default=240.0)
     ap.add_argument("--data-root", default="/data")
     ap.add_argument("--parallel", type=int, default=1)
+    ap.add_argument("--only", default="", help="comma list of brain:house to run from the plan (e.g. the missing ones)")
     a = ap.parse_args()
     os.environ["SCOUT_COMMIT"] = subprocess.run(["git", "-C", ROOT, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     os.environ["SCOUT_HOST"] = os.environ.get("SCOUT_HOST", "aws")
     if a.plan:
         plan = json.load(open(a.plan))
         seed, explore = plan.get("seed", 0), plan.get("explore_s", a.explore_s)
+        only = {tuple(x.split(":")) for x in a.only.split(",") if x}
         jobs = [(h, b, seed, a.tag, explore, a.data_root) for b in plan["brains"] for h in plan["houses"]
-                if not os.path.exists(f"{a.data_root}/scout/env/{a.tag}/{b}_{h}_s{seed}/manifest.json")]
+                if (not only or (b, h) in only)
+                and not os.path.exists(f"{a.data_root}/scout/env/{a.tag}/{b}_{h}_s{seed}/manifest.json")]
     else:
         jobs = [(a.house, a.brain, a.seed, a.tag, a.explore_s, a.data_root)]
     print(f"{len(jobs)} episodes to run", flush=True)
