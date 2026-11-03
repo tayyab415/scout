@@ -241,3 +241,16 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
 @app.local_entrypoint()
 def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: int = 0, run_name: str = ""):
     print(live_run.remote(house, seconds, seed, run_name))
+
+
+@app.local_entrypoint()
+def batch(seconds: float = 600.0, tag: str = "r10"):
+    """The preselected robustness houses (configs/robustness_houses.json), in parallel. Every run is kept."""
+    import json
+    houses = json.load(open(os.path.join(CFG, "robustness_houses.json")))
+    calls = [live_run.spawn(h, seconds, 0, f"{tag}_{h}") for h in houses]
+    for h, c in zip(houses, calls):
+        try:
+            print(h, c.get())
+        except Exception as e:  # keep going; a crash is a result too
+            print(h, "CRASHED", type(e).__name__, str(e)[:300])
