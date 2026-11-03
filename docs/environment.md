@@ -19,6 +19,9 @@ agent.ask("Is the sofa still where you last saw it?")
 
 - `ScoutEnv.observe(detect)` is everything the agent may use. `truth_objects()`, `visible_instances()` and
   `move_object()` are evaluator-only.
+- Path clearance: every planned path cell keeps 0.25 m from the nearest obstacle cell, except cells the body has
+  already stood on. It fits there, so it can always retrace its own trail. When the body already stands inside a
+  margin, it may step out within 0.6 m.
 - One clock: `env.t = env.k / 30`. Every recorded stream (observer frames, head frames, events, map snapshots)
   carries `t`. Fall recovery runs on the same clock.
 
