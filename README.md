@@ -50,6 +50,10 @@ modal run scripts/modal_env.py::videos --tag cmp                                
 python scripts/score_env.py --tag cmp                                                      # leaderboard
 ```
 
+## License
+
+MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is CC BY-NC 4.0).
+
 ## Results
 
 All results, including failures and negative findings, are in `docs/results/`.
