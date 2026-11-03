@@ -194,6 +194,8 @@ def score_episode(ep_dir: str, layout=None) -> dict:
         r = dict(falls=log["falls"], got_up=log["got_up"], ended=log["ended"], checks=score_checks(log, mem, ev))
         if a in ("unchanged", "moved"):
             r["verify"] = score_verify(a, log, mem, man.get("target"), ev.get("moves"))
+            if log.get("recall"):
+                r["verify_recall"] = score_verify(a, dict(qa=log["recall"]), mem, man.get("target"), ev.get("moves"))
         if log.get("quiz"):
             r["quiz"] = score_quiz(log, mem, ev)
             r["cite"] = score_citations(log, mem, ev)

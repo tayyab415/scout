@@ -173,13 +173,19 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
             t_ask = env.t + ask_after_s
             e1 = run_until(t_ask, w, atimes)
             if e1 == "time":
+                # paired baseline: the same brain, same memory, same moment, answering from memory without checking
+                rec = copy.deepcopy(agent)
+                rec.brain.recall = True
+                rec.ask(question)
+                rec._decide(env.t, env.body.xy)
+                recall = [q for q in rec.qa if q["kind"] == "answer"][-1:]
                 agent.ask(question)
                 n_qa = len(agent.qa)
                 e2 = run_until(env.t + answer_timeout_s, w, atimes,
                                stop=lambda: any(q["kind"] == "answer" for q in agent.qa[n_qa:]) and agent.mode != "check")
                 run_until(env.t + 3.0, w, atimes)
             else:
-                e2 = e1
+                e2, recall = e1, []
             w.close()
             qz = agent.quiz(PROMPTS, t=round(env.t, 3)) if (quiz and arm == "unchanged") else []
             arms_out[arm] = dict(moved=moved, end=e2, qa=agent.qa, quiz=qz)
@@ -189,7 +195,7 @@ def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev
                 p = f"{adir}/frames/{lk['frame']:04d}.jpg"
                 open(p, "wb").write(lk["jpg"])
             looks = [{k: v for k, v in lk.items() if k != "jpg"} for lk in agent.looks]
-            json.dump(dict(events=agent.events, looks=looks, decisions=agent.decisions, qa=agent.qa, quiz=qz,
+            json.dump(dict(events=agent.events, looks=looks, decisions=agent.decisions, qa=agent.qa, quiz=qz, recall=recall,
                            falls=agent.falls, got_up=agent.got_up, ended=agent.ended, t_end=round(env.t, 3),
                            observer_times_prefix=times, observer_times=atimes), open(f"{adir}/log.json", "w"))
             json.dump(agent.memory_dump(), open(f"{adir}/memory.json", "w"))
