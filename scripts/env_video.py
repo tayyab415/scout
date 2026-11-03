@@ -203,7 +203,7 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(bf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((560, 560)), (40, 140))
+            card.paste(b.resize((520, 520)), (40, 140))
             dr.text((40, 120), f"what it remembered: its best sighting (t={st.looks[bf]['t']:.0f}s)", fill=(200, 200, 200), font=small)
         if q.get("now_frames"):
             nf = q["now_frames"][-1]
@@ -218,11 +218,11 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
             for det in st.boxes_for_frame(nf):
                 if det.get("track") == q.get("track"):
                     bd.rectangle(det["box"], outline=(255, 220, 0), width=5)
-            card.paste(b.resize((560, 560)), (680, 140))
+            card.paste(b.resize((520, 520)), (680, 140))
             dr.text((680, 120), f"when it went back (t={lk['t']:.0f}s); magenta = remembered spot", fill=(200, 200, 200), font=small)
         ev = q.get("evidence")
         if ev:
-            dr.text((30, 704 - 24), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
+            dr.text((30, 676), f"evidence over {ev['views']} looks at the spot: recognised {ev['hits']}, depth saw past it "
                     f"{ev['through']}, something there {ev['occupied']}", fill=(170, 170, 170), font=small)
         for _ in range(15 * 6):
             w.append_data(np.asarray(card))
