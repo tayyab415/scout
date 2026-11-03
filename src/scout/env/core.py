@@ -85,11 +85,12 @@ class ScoutEnv:
 
     def visible_instances(self) -> dict:
         """Which object instances cover >= VISIBLE_FRAC of the head image right now: {instance_id: fraction}."""
-        rd = self.body._renderer(SIZE, SIZE)
-        rd.enable_segmentation_rendering()
+        if not hasattr(self, "_seg_rd"):  # its own renderer: sharing one with depth rendering garbles the ids
+            self._seg_rd = self.mj.Renderer(self.M, SIZE, SIZE)
+            self._seg_rd.enable_segmentation_rendering()
+        rd = self._seg_rd
         rd.update_scene(self.D, camera="eye")
         seg = rd.render()
-        rd.disable_segmentation_rendering()
         gid = seg[..., 0]
         isg = (seg[..., 1] == int(self.mj.mjtObj.mjOBJ_GEOM)) & (gid >= 0)
         inst = np.full(gid.shape, -1)
