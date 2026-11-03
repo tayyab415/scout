@@ -1,0 +1,60 @@
+{
+ "episode": "llama4_procthor-10k-val_val_100_s0",
+ "house": "procthor-10k-val_val_100",
+ "brain": "llama4-maverick",
+ "seed": 0,
+ "explore_s": 240.0,
+ "ask_after_s": 20.0,
+ "answer_timeout_s": 90.0,
+ "start": {
+  "xy": [
+   10.15,
+   4.35
+  ],
+  "yaw": -1.446
+ },
+ "explore_end": "time",
+ "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
+ "observation_contract": "head RGB-D 512x512, 75 deg FOV, 20 deg down; ideal depth; exact head-camera pose and body xy/yaw from the simulator (perfect odometry); SAM 3.1 detections every 1 s; map from depth every 0.5 s",
+ "target": {
+  "instance": 3,
+  "category": "chair",
+  "from_xy": [
+   9.155,
+   1.771
+  ],
+  "track_at_freeze": 4,
+  "t_freeze": 240.0,
+  "reference_sighting_t": 236.0,
+  "sightings_at_freeze": 83,
+  "dest_xy": [
+   3.85,
+   8.55
+  ],
+  "dest_room": "Kitchen",
+  "question": "Is the chair you saw at 236 s still where it was?"
+ },
+ "arms": {
+  "unchanged": {
+   "end": "stopped",
+   "moved": null
+  },
+  "moved": {
+   "end": "stopped",
+   "moved": {
+    "t": 240.0,
+    "instance": 3,
+    "category": "chair",
+    "from_xy": [
+     9.155,
+     1.771
+    ],
+    "to_xy": [
+     3.85,
+     8.55
+    ]
+   }
+  }
+ },
+ "wall_minutes": 10.8
+}

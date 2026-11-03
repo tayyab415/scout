@@ -155,3 +155,14 @@ def test_viewpoint_is_reachable_close_and_has_line_of_sight():
     seg = end + np.linspace(0, 1, 30)[:, None] * (obj - end)
     ij = np.floor((seg[:-4] - m.origin) / m.res).astype(int)
     assert not m.blocked[ij[:, 0], ij[:, 1]].any()
+
+
+def test_recorded_sample_episode_scores_offline():
+    """A real recorded episode (examples/sample_episode) scores without a GPU, both arms correct."""
+    import glob
+    from scout.env.scoring import score_episode
+    from scout.world.layout import Layout
+    d = os.path.join(ROOT, "examples/sample_episode")
+    r = score_episode(d, Layout.load(glob.glob(d + "/layout_*.npz")[0]))
+    assert r["unchanged"]["verify"]["outcome"] == "correct" and r["moved"]["verify"]["outcome"] == "correct"
+    assert 0 <= r["unchanged"]["quiz"]["accuracy"] <= 1 and r["unchanged"]["cite"]["cited"] > 0
