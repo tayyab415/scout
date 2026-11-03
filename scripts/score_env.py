@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from scout.env.scoring import score_episode  # noqa: E402
 from scout.world.layout import Layout  # noqa: E402
 
-VOL = "tribe-lab-claude"
+VOL = os.environ.get("SCOUT_VOLUME", "tribe-lab-claude")
 
 
 def fetch(tag, root):
