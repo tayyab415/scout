@@ -1,11 +1,31 @@
-# Scout: an embodied memory environment built on the Meta stack
+# Scout
 
-**Can a robot tell what it knows from what it needs to check? Plug in a brain and find out.**
+### A physics-simulated home that tests whether a robot's memory is still true.
 
-Scout puts a physics-simulated humanoid in a home it has never seen. It explores with its own eyes, builds its own map
-and memory, and is later asked: *"Is the sofa still where you last saw it?"* Sometimes the evaluator has secretly
-moved the sofa, and sometimes it has not. The body has to walk back, look, and answer from fresh evidence. Brains are
-plug-ins, so different models can be compared on the same houses with the same body, eyes and budgets.
+![Same robot, same memory, same question: two worlds](assets/media/branch.gif)
+
+A Meta Motivo humanoid explores a house it has never seen. It sees through a head camera with SAM 3.1 and keeps a
+memory of what it saw and where. Then the episode splits into two worlds. In one, nothing changes. In the other, we
+quietly move an object. Both copies of the robot get the same question: *"Is the sofa you saw at 232 s still where
+it was?"*
+
+![Memory can't tell the two worlds apart. Looking can.](assets/media/verdict.png)
+
+**Memory can't tell the two worlds apart. Looking can.** Answering from memory says "still there" in both worlds,
+so it is wrong in one of them. The robot that walks back and looks gets both right: its depth camera now sees past
+the spot where the sofa was.
+
+Scout is an open environment for testing that ability in robot brains. Any model plugs in through four methods.
+The environment runs the physics, the eyes and the hidden interventions, and scores every answer against what the
+robot actually saw.
+
+- **Physics, not animation.** The body is Meta Motivo in MuJoCo. It walks, falls and gets itself back up.
+- **Its own eyes and map.** SAM 3.1 on an RGB-D head camera, and a floor map built from depth. No layout, no object
+  list.
+- **A world that changes behind its back.** Each episode branches from one physics snapshot into a moved world and
+  an unchanged world, so both get the identical question.
+- **Honest scoring.** Grading against per-frame visibility, frame-level citations, and abstentions counted
+  separately. Every failure is kept.
 
 | Part | Model / asset | Role |
 | --- | --- | --- |
