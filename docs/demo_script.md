@@ -2,19 +2,22 @@
 
 Opening line: **"Can a robot verify what it remembers?"**
 
-`scripts/demo_cut.py` assembles the video, under 3:00, from one recorded episode. Every clip is a real recording;
+`scripts/demo_cut.py` assembles the video, under 3:00, from one recorded episode and its branch shot
+(`scripts/branch_video.py`). Every clip is a real recording;
 every number comes from the final leaderboard (`final3`). The narrator records the voice over the cut.
 
 | Time (approx.) | On screen | Voice-over (read as written, or adapt) |
 | --- | --- | --- |
-| 0:00-0:10 | Evidence card, moved arm: what it remembered, and what it saw when it went back | "This robot saw a sofa here. Then, while it wasn't looking, we moved it. Watch what happens when we ask about it." |
-| 0:10-0:16 | Title card | "This is Scout: an environment where a physics-simulated humanoid explores homes it has never seen." |
-| 0:16-0:41 | Exploration, three panels, labelled "N× playback" | "The body is Meta Motivo, in full physics. SAM 3.1 recognises objects in its head camera. It builds its own map from depth and pins each object it sees, with the frame it saw it in." |
-| 0:41-1:40 | The hidden move (on-screen caption), the question, the walk back, the look, in real time | "We branch the episode: in one copy we move the object, in the other we leave it. Then we ask: is it still where you saw it? The brain picks which memory the question is about. The body walks back, turns to face the spot, and looks." |
-| 1:40-1:58 | Both evidence cards, coloured by the scorer | "Answering from memory alone, a fixed persistence rule, it says yes, it's still there. That's stale. After looking, it says it couldn't find it, because its depth camera now sees past that spot. In the copy where nothing moved, it says it just saw it there again." |
-| 1:58-2:14 | Leaderboard: correct, abstain and wrong counts with denominators | "Any brain plugs in. On eight homes it had never seen: memory-quiz accuracy, answers backed by the right frame, and how often checking was correct, abstained or wrong." |
-| 2:14-2:23 | Plug-in card: the interface, the compare command, the GPU-free scoring command, the URL | "Four methods make a brain. One command compares brains. Recorded episodes score on a laptop." |
-| 2:23-2:34 | Disclosure card | "Exploration is a fixed rule. Depth and pose come from the simulator. GPT-6.1 Terra stands in for Muse Spark. Every failure is in the repo." |
+| 0:00-0:14 | Hook: the last 10 s of the split (both worlds answering), then the graded verdict card | "Same robot. Same memory. Same question. In one world we moved the sofa; in the other we didn't. Memory can't tell the two worlds apart. Looking can." |
+| 0:14-0:20 | Title card: "A physics-simulated home that tests whether a robot's memory is still true." | "This is Scout." |
+| 0:20-0:45 | Exploration, three panels, labelled "10x playback" | "A Meta Motivo humanoid, in full physics, explores a home it has never seen. SAM 3.1 recognises objects in its head camera; depth builds its own map; every object is pinned where it was seen, with the frame it was seen in." |
+| 0:45-1:50 | The split, in real time: World A and World B side by side. The world that finishes first freezes with a label. World B reaches the empty spot around 303 s. | "Here we branch the episode from one physics snapshot. In World B we quietly move the sofa. Both robots get the same question. The brain picks which memory it is about. The body walks back, turns to face the spot, and looks. In World A the sofa is there. In World B its depth camera sees straight past where the sofa was." |
+| 1:50-1:58 | Verdict card | "From memory alone, a fixed persistence rule, the answer is 'still there' in both worlds, so it's wrong in one. Looking gets both right." |
+| 1:58-2:16 | Evidence cards (moved, unchanged), coloured by the scorer | "Every answer cites the frame it is based on." |
+| 2:16-2:32 | Leaderboard | "Any brain plugs in. On eight homes it had never seen: correct, abstained and wrong, with denominators, plus the memory quiz graded against what each camera actually saw." |
+| 2:32-2:42 | Plug-in card | "Register a brain in three lines, run it, and score recorded episodes on a laptop." |
+| 2:42-2:51 | Built during the hackathon | "Everything on this card was built this week; the models and houses were used as is." |
+| 2:51-3:00 | Disclosure card | "Exploration is a fixed rule; depth and pose come from the simulator; the brain here is GPT-6.1 Terra standing in for Muse Spark. Every failure is in the repo." |
 
 ## Who decides what (say it this way)
 

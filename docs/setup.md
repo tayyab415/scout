@@ -5,7 +5,7 @@ Everything heavy runs on [Modal](https://modal.com) GPUs. Scoring and the CPU te
 ## 1. Local tools
 
 ```bash
-git clone <this repo> scout && cd scout
+git clone https://github.com/tayyab415/scout && cd scout
 uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
 .venv/bin/python -m pytest -q tests        # CPU only: map, memory, scorers, recording and review contracts
 modal token new                            # Modal account
