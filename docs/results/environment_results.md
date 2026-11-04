@@ -66,12 +66,84 @@ evaluation. Its houses now count as development houses.
 
   The check now prefers abstaining to guessing.
 
-## Final evaluation: `final3` (8 brand-new houses × 4 brains, 32 episodes)
+## Final evaluation: `final3` (8 never-seen houses × 4 brains, 32 of 32 planned episodes)
 
-Results are added here when the run finishes. Houses: `configs/final3_houses.json`; 52 houses were excluded as
-used before.
+Plan: `configs/frozen_final3.json`. The houses (`configs/final3_houses.json`) were picked after 52 houses had been
+used for development. The brain is GPT-6.1 Terra on AWS Bedrock, standing in for Muse Spark.
+
+| brain | episodes planned | completed | target frozen | verify unchanged (correct / abstain / wrong / other) | verify moved (correct / abstain / wrong / other) | memory-persistence rule, unchanged / moved (correct) | quiz accuracy (errors) | affirmative answers with valid evidence | own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| llama4 | 8 | 8 | 6 | 2 / 2 / 0 / 4 | 1 / 2 / 0 / 5 | 3 / 0 | 0.50 (16) | 54/64 | 19 / 18 / 1 | 96% | 15 / 15 |
+| random | 8 | 8 | 6 | 0 / 0 / 0 / 8 | 0 / 0 / 0 / 8 | 0 / 0 | 0.17 (0) | 2/64 | 8 / 12 / 1 | 83% | 0 / 0 |
+| rules | 8 | 8 | 7 | 4 / 1 / 0 / 3 | 2 / 2 / 0 / 4 | 5 / 0 | 0.83 (0) | 61/87 | 3 / 8 / 0 | 98% | 17 / 17 |
+| terra | 8 | 8 | 7 | 3 / 2 / 0 / 3 | 4 / 1 / 0 / 3 | 7 / 0 | 0.82 (0) | 61/82 | 29 / 28 / 6 | 93% | 3 / 3 |
+
+Verification outcomes per arm (physical check; 'not run' = no target frozen, crashed, or moved arm skipped):
+
+| brain | arm | correct | abstain | wrong | wrong target | ineligible | no answer | not run |
+|---|---|---|---|---|---|---|---|---|
+| llama4 | unchanged | 2 | 2 | 0 | 2 | 0 | 0 | 2 |
+| llama4 | moved | 1 | 2 | 0 | 0 | 0 | 2 | 3 |
+| random | unchanged | 0 | 0 | 0 | 6 | 0 | 0 | 2 |
+| random | moved | 0 | 0 | 0 | 4 | 0 | 1 | 3 |
+| rules | unchanged | 4 | 1 | 0 | 2 | 0 | 0 | 1 |
+| rules | moved | 2 | 2 | 0 | 2 | 0 | 1 | 1 |
+| terra | unchanged | 3 | 2 | 0 | 0 | 0 | 2 | 1 |
+| terra | moved | 4 | 1 | 0 | 0 | 0 | 2 | 1 |
+
+Falls, recoveries and own checks are counted on the unchanged arm (it shares the exploration with the moved arm).
+
+
+**Memory-quiz denominators** (16 questions per episode where the memory quiz ran):
+
+| brain | questions | correct | errors |
+| --- | --- | --- | --- |
+| terra | 112 | 92 | 0 |
+| rules | 112 | 93 | 0 |
+| llama4 | 96 | 48 | 16 (invalid replies, counted as wrong) |
+| random | 96 | 16 | 0 |
+
+**What final3 shows:**
+
+- **The physical check gave 0 wrong verdicts in all 64 arms.** When it was not sure, it abstained.
+- **The memory-persistence rule was never right in a moved arm** (0 for every brain). In the unchanged arms it was
+  right whenever the brain picked the right object: terra 7, rules 5, llama4 3.
+- **Clean verification pairs** (the check correct in both arms, the rule correct when unchanged and wrong when
+  moved): 6. They are terra on val_893 (dresser), val_752 (sofa) and val_330 (dresser); llama4 on val_300 (sofa);
+  rules on val_893 (laptop) and val_300 (dresser). The public sample and the demo use terra / val_752.
+- **Failures kept:**
+  - no target frozen (for example, val_167 stalls with no unexplored openings left and nothing eligible to move);
+  - wrong target (the random brain picks a random object);
+  - no answer in time: a question waits behind a re-check already in progress, a known flaw that affects all
+    brains alike.
+- **Falls:** 35 falls; the body got itself back up 35 times.
+
+**Provenance** (`docs/results/final3/provenance.json`, `docs/results/final3/aws_runs.jsonl`):
+
+- 24 episodes ran on Modal (L40S) from the frozen-plan commit `1cfe674`. They were launched with
+  `modal_env.py::compare`; the client was lost when the build host restarted at 22:21 UTC.
+- 8 episodes ran on AWS (g5.2xlarge, A10G) with `scripts/run_local.py`, at commits `872684a` (2 episodes) and
+  `ba31a83` (6 episodes).
+- `git diff` of agent, core, perception, memory, body, world, mind and brains between `1cfe674` and both AWS
+  commits is empty. The runner moved into `src/scout/env/episode.py` and gained provenance fields, nothing else.
+- **Retry history:**
+  - first AWS attempt: rules/val_330 and random/val_893 completed;
+  - the other 6 random episodes crashed with CUDA out-of-memory, because each worker process kept the previous
+    episode's GPU memory;
+  - after the fix (one fresh process per episode), all 6 completed;
+  - all attempts are in `aws_runs.jsonl`.
+- **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `us.openai.gpt-6.1-terra` and
+  `us.meta.llama4-maverick-17b-instruct-v1:0` on Bedrock (us-east-1).
+
+**Recordings:** every episode's arm videos are in `s3://meta-hackathon-570044538587/scout/env/final3/<episode>/`,
+including the failures and the no-target episodes (`explore_only.mp4`). The demo cut, branch shot and social clip
+are in `s3://meta-hackathon-570044538587/scout/media/`.
 
 ## Branch replay
 
-120 identical steps from one snapshot, run twice: maximum qpos difference 3.9e-12. 3 of 8 compared head frames are
-identical; the others differ by at most 1 intensity level in at most 0.002% of pixels (GPU rounding).
+120 identical steps from one snapshot, run twice:
+
+- **Modal L40S:** maximum qpos difference 3.9e-12; 3 of 8 compared head frames identical.
+- **AWS A10G:** 5.8e-12; 7 of 8 identical (`docs/results/evidence/replay_check.txt`, `replay_result.json`; recording
+  in `s3://.../scout/evidence/replay_check.mp4`).
+- **Remaining differences:** at most 1 intensity level, in at most 0.002% of pixels (GPU rounding).

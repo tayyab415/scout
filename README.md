@@ -75,6 +75,16 @@ modal run scripts/modal_env.py::videos --tag mytag                              
 
 MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is CC BY-NC 4.0).
 
-## Results
+## Results (final evaluation: 8 never-seen homes × 4 brains, 32 of 32 episodes)
 
-All results, including failures and negative findings, are in `docs/results/`.
+- **The physical check never gave a wrong verdict** in 64 arms. When unsure it abstains, and abstentions are reported.
+- **Answering from memory was never right when the object had moved** (0 for every brain).
+- **The memory quiz separates the brains.** It is graded only against what each robot's camera actually saw:
+  - GPT-6.1 Terra (Muse Spark stand-in): 92/112 correct;
+  - rules: 93/112;
+  - Llama 4 Maverick: 48/96, with 16 invalid replies;
+  - random: 16/96.
+- **The body stays up:** 35 falls, and it got itself back up all 35 times.
+
+Full leaderboard, every outcome category, provenance, retries and failures: `docs/results/environment_results.md`
+and `docs/results/final3/`.
