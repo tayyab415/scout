@@ -51,6 +51,7 @@ def main():
     ap.add_argument("--episode", required=True)
     ap.add_argument("--leaderboard", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--branch", default="", help="branch shot from scripts/branch_video.py (both worlds side by side)")
     a = ap.parse_args()
     man = json.load(open(f"{a.episode}/manifest.json"))
     card_len = FPS * 6  # env_video appends each evidence card for 6 s at the end of an arm video
@@ -64,11 +65,23 @@ def main():
         for _ in range(n if n is not None else int(secs * FPS)):
             w.append_data(img)
 
-    put(mv_card, 10)
+    branch = []
+    if a.branch:
+        rb = imageio.get_reader(a.branch)
+        nb = rb.count_frames()
+        branch_card = rb.get_data(nb - 3)
+        split_frames = nb - FPS * 8  # branch_video appends an 8 s verdict card
+    if a.branch:
+        for i, f in enumerate(rb):   # hook: the last 10 s of the split, both worlds answering
+            if split_frames - FPS * 10 <= i < split_frames:
+                w.append_data(f)
+        put(branch_card, 4)
+    else:
+        put(mv_card, 10)
     tgt = man.get("target") or {}
-    put(card(["Scout", "Can a robot tell what it knows from what it needs to check?",
-              "A physics-simulated humanoid (Meta Motivo) in a home it has never seen. Eyes: SAM 3.1. Brain: plug in yours.",
-              f"House {man['house']}  |  brain: {man['brain']}"], [64, 34, 26, 22],
+    put(card(["Scout", "A physics-simulated home that tests whether a robot's memory is still true.",
+              "Body: Meta Motivo, in physics. Eyes: SAM 3.1. Brain: plug in yours.",
+              f"This episode: house {man['house']}, never seen before  |  brain: {man['brain']}"], [64, 32, 26, 20],
              [(255, 210, 90), (235, 235, 235), (200, 200, 200), (150, 150, 150)]), 6)
     speed = max(1, int(np.ceil(n_prefix / (FPS * 25))))  # about 25 s of exploration on screen
     for i, f in enumerate(ru):      # exploration (shared by both arms), sped up and labelled
@@ -80,11 +93,18 @@ def main():
             d.rectangle([W - 230, 44, W - 10, 84], fill=(0, 0, 0))
             d.text((W - 220, 50), f"{speed}x playback", fill=(255, 210, 90), font=font(26))
             w.append_data(np.asarray(im))
-    for i, f in enumerate(rm):      # the hidden move, the question, the walk back, the look: real time
-        if i >= nm - card_len:
-            break
-        if i >= n_prefix:
+    if a.branch:                    # the split, both worlds in real time, then the graded verdict
+        for i, f in enumerate(imageio.get_reader(a.branch)):
+            if i >= split_frames:
+                break
             w.append_data(f)
+        put(branch_card, 8)
+    else:
+        for i, f in enumerate(rm):  # the hidden move, the question, the walk back, the look: real time
+            if i >= nm - card_len:
+                break
+            if i >= n_prefix:
+                w.append_data(f)
     put(mv_card, 9)
     put(un_card, 9)
     rows = [ln for ln in open(a.leaderboard).read().splitlines() if ln.startswith("| ") and "---" not in ln][:5]
