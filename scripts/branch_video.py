@@ -69,7 +69,9 @@ def main():
             dr.rectangle([x0 + 4, 56, x0 + 4 + 16 + int(dr.textlength(title, font=mid)), 86], fill=(0, 0, 0))
             dr.text((x0 + 12, 60), title, fill=GREEN if arm == "unchanged" else RED, font=mid)
             if arm == "moved" and t >= t_move:
-                dr.text((x0 + 12, 92), f"(the robot was not told; moved at t={t_move:.0f} s)", fill=GREY, font=small)
+                note = f"the robot was not told (moved at t={t_move:.0f} s)"
+                dr.rectangle([x0 + 4, 88, x0 + 20 + int(dr.textlength(note, font=small)), 112], fill=(0, 0, 0))
+                dr.text((x0 + 12, 91), note, fill=(230, 230, 230), font=small)
             evs = [e for e in s["st"].events_until(t) if e["kind"] in ("question", "check_start", "check_result", "answer")]
             y = 540
             for e in evs[-3:]:
