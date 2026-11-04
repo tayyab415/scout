@@ -45,30 +45,45 @@ def main():
         grade = lambda q: score_verify(arm, dict(qa=[q]), st.mem, tgt, ev.get("moves"), ev)["outcome"] if q else None  # noqa: E731
         sides[arm] = dict(st=st, rd=rd, times=st.log["observer_times"], ans=ans[-1] if ans else None, rec=rec,
                           g_ans=grade(ans[-1]) if ans else None, g_rec=grade(rec))
-    n = min(len(sides["unchanged"]["times"]), len(sides["moved"]["times"]), int(a.max_seconds * FPS))
-    t_move = (json.load(open(f"{a.run}/moved/evaluator.json")).get("moves") or [{}])[0].get("t", man["explore_s"])
+    # play until the longer world has answered; the world that finished first is frozen on its last frame
+    n = min(max(len(sides["unchanged"]["times"]), len(sides["moved"]["times"])), int(a.max_seconds * FPS))
+    moves = json.load(open(f"{a.run}/moved/evaluator.json")).get("moves") or []
+    t_move = moves[0]["t"] if moves else None
     w = imageio.get_writer(a.out, fps=FPS, codec="libx264", quality=8, macro_block_size=1)
     big, mid, small = font(30), font(20), font(16)
     frames = {arm: iter(sides[arm]["rd"]) for arm in sides}
+    last = {}
     for i in range(n):
         canvas = Image.new("RGB", (W, H), (12, 12, 16))
         dr = ImageDraw.Draw(canvas)
         dr.text((24, 10), "Same robot. Same memory. Same question.", fill=GOLD, font=big)
         for k, arm in enumerate(("unchanged", "moved")):
             s = sides[arm]
-            t = s["times"][i]
+            done = i >= len(s["times"])
+            t = s["times"][min(i, len(s["times"]) - 1)]
             x0 = k * 640
-            obs = Image.fromarray(next(frames[arm])).resize((632, 474))
+            if not done:
+                last[arm] = Image.fromarray(next(frames[arm])).resize((632, 474))
+            obs = last[arm]
             canvas.paste(obs, (x0 + 4, 56))
+            if done:
+                lab = f"finished at t={t:.1f} s (frozen)"
+                dr.rectangle([x0 + 4, 500, x0 + 20 + int(dr.textlength(lab, font=small)), 528], fill=(0, 0, 0))
+                dr.text((x0 + 12, 504), lab, fill=(230, 230, 230), font=small)
             fi = s["st"].head_frame(t)
             if fi is not None:
                 head = Image.open(f"{a.run}/{arm}/frames/{fi:04d}.jpg").convert("RGB").resize((180, 180))
                 canvas.paste(head, (x0 + 448, 344))
                 dr.rectangle([x0 + 448, 344, x0 + 628, 524], outline=(255, 255, 255), width=2)
-            title = "World A: nothing moved" if arm == "unchanged" else f"World B: we moved the {tgt['category']}"
+            if arm == "moved" and moves:
+                title = f"World B: we moved the {tgt['category']}"
+            elif arm == "moved":
+                title = "World B: the move did not happen (ineligible)"
+            else:
+                title = "World A: nothing moved"
             dr.rectangle([x0 + 4, 56, x0 + 4 + 16 + int(dr.textlength(title, font=mid)), 86], fill=(0, 0, 0))
             dr.text((x0 + 12, 60), title, fill=GREEN if arm == "unchanged" else RED, font=mid)
-            if arm == "moved" and t >= t_move:
+            if arm == "moved" and t_move is not None and t >= t_move:
                 note = f"the robot was not told (moved at t={t_move:.0f} s)"
                 dr.rectangle([x0 + 4, 88, x0 + 20 + int(dr.textlength(note, font=small)), 112], fill=(0, 0, 0))
                 dr.text((x0 + 12, 91), note, fill=(230, 230, 230), font=small)
@@ -96,8 +111,9 @@ def main():
     for k, arm in enumerate(("unchanged", "moved")):
         s = sides[arm]
         x0 = 40 + k * 620
-        dr.text((x0, 110), "World A: nothing moved" if arm == "unchanged" else "World B: it was moved", fill=GREY, font=mid)
-        dr.text((x0, 160), "Answering from memory:", fill=GREY, font=small)
+        dr.text((x0, 110), "World A: nothing moved" if arm == "unchanged" else
+                ("World B: it was moved" if moves else "World B: move did not happen"), fill=GREY, font=mid)
+        dr.text((x0, 160), "Answering from memory (memory-persistence rule, no look):", fill=GREY, font=small)
         for j, ln in enumerate(textwrap.wrap(f'"{s["rec"]["say"]}"' if s["rec"] else "-", 48)[:3]):
             dr.text((x0, 185 + 24 * j), ln, fill=col(s["g_rec"]), font=mid)
         dr.text((x0, 270), f"[{s['g_rec']}]", fill=col(s["g_rec"]), font=mid)

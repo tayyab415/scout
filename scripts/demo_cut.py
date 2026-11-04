@@ -126,11 +126,21 @@ def main():
             fill=(150, 150, 150), font=font(16))
     put(np.asarray(im), 16)
     put(card(["Plug in your own brain",
-              "class MyBrain:  decide(memory, state)   resolve(memory, question)   phrase(question, remembered, finding)   answer(memory, question)",
-              "modal run scripts/modal_env.py::compare --brains mybrain,rules --houses-file final3_houses.json --tag mine",
-              "Score a recorded episode on a laptop, no GPU: examples/sample_episode (docs/setup.md, section 5)",
-              "github.com/tayyab415/scout"], [34, 20, 20, 22, 30],
-             [(255, 210, 90), (200, 230, 255), (200, 230, 255), (220, 220, 220), (255, 210, 90)]), 9)
+              "from scout.brains import register_brain",
+              "class MyBrain:  decide(memory, state)   resolve(memory, question)   phrase(...)   answer(memory, question)",
+              "register_brain('mybrain', MyBrain)",
+              "python scripts/run_local.py --brain-module mybrain.py --brain mybrain --house procthor-10k-val_val_752 --tag mine",
+              "...or any Bedrock chat model:  --brain llm:<model id>",
+              "Score a recorded episode on a laptop:  python scripts/score_episode.py examples/sample_episode",
+              "github.com/tayyab415/scout"], [34, 19, 19, 19, 17, 19, 19, 30],
+             [(255, 210, 90)] + [(200, 230, 255)] * 6 + [(255, 210, 90)]), 10)
+    put(card(["Built during the hackathon (Oct 27 - Nov 4)",
+              "The environment: head RGB-D camera, the robot's own depth map, SAM 3.1 placed in 3D, episodic memory",
+              "The body controller on Meta Motivo: blended skills, turning to look, getting back up after falls",
+              "The evaluator: object identities, per-frame visibility, hidden moves, branching one episode into two worlds",
+              "Scoring, the plug-in brain interface, the synchronised videos, this demo",
+              "Used as is: Meta Motivo M-1, SAM 3.1, ProcTHOR houses (MolmoSpaces), GPT-6.1 Terra and Llama 4 on Bedrock"],
+             [34, 22, 22, 22, 22, 20], [(255, 210, 90)] + [(235, 235, 235)] * 4 + [(170, 170, 170)]), 9)
     put(card(["What is real and what is given",
               "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
               "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
