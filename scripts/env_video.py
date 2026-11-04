@@ -237,7 +237,10 @@ def compose(run_dir: str, arm: str, out: str, title: str = ""):
         for ln in textwrap.wrap(f'After walking back to look [{o}]: "{q["say"]}"', 100)[:3]:
             dr.text((30, y), ln, fill=col, font=small)
             y += 20
-        dr.text((30, y + 2), f"truth: {'the evaluator moved it' if arm == 'moved' else 'nothing was moved'}   |   "
+        moved_rec = bool(ev_.get("moves"))
+        truth = "the evaluator moved it" if moved_rec else ("nothing was moved" if arm == "unchanged" else
+                                                           "the move did not happen (ineligible)")
+        dr.text((30, y + 2), f"truth: {truth}   |   "
                 f"verdict scored: {q.get('result')}   |   brain: {brain}", fill=(200, 200, 200), font=small)
         label_y = y + 30                       # image captions sit below the measured text
         img_y = label_y + 20

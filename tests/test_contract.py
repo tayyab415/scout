@@ -217,3 +217,12 @@ def test_public_sample_is_a_verified_pair():
     r = score_episode(d, Layout.load(glob.glob(d + "/layout_*.npz")[0]))
     assert r["unchanged"]["verify"]["outcome"] == "correct" and r["moved"]["verify"]["outcome"] == "correct"
     assert r["unchanged"]["verify_recall"]["outcome"] == "correct" and r["moved"]["verify_recall"]["outcome"] == "wrong"
+
+
+def test_registered_brain_plugs_in():
+    from scout.brains import RuleBrain, make_brain, register_brain
+
+    class MyBrain(RuleBrain):
+        name = "mybrain"
+    register_brain("mybrain", MyBrain)
+    assert make_brain("mybrain").name == "mybrain"

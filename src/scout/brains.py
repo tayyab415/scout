@@ -141,6 +141,15 @@ class RandomBrain:
         return {"answer": f"I saw a {r['label']}.", "cited_sightings": r["ids"][-1:], "observed": True, "object_id": r["id"]}
 
 
+_REGISTRY = {}
+
+
+def register_brain(name: str, factory) -> None:
+    """Plug in your own brain: register_brain("mybrain", MyBrain) makes `--brains mybrain` work. A brain implements
+    decide, resolve, phrase and answer (see the module docstring); any Meta Model API chat model also works as "llm:<model id>"."""
+    _REGISTRY[name] = factory
+
+
 def make_brain(name: str):
     """'<brain>-recall' is the same brain answering verification questions from memory only, without walking back."""
     if name.endswith("-recall"):
@@ -148,6 +157,8 @@ def make_brain(name: str):
         b.recall = True
         b.name = f"{b.name} + memory only (no physical check)"
         return b
+    if name in _REGISTRY:
+        return _REGISTRY[name]()
     if name in ("spark", "spark"):
         return LLMBrain(SPARK)
     if name in ("llama4", "llama"):

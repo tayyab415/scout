@@ -23,6 +23,9 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 def _one(args):
     house, brain, seed, tag, explore_s, data_root = args
     os.environ.setdefault("MUJOCO_GL", "egl")
+    if os.environ.get("SCOUT_BRAIN_MODULE"):  # each episode runs in a fresh process: register the brain here
+        import runpy
+        runpy.run_path(os.environ["SCOUT_BRAIN_MODULE"])
     from scout.env.episode import run_episode
     t0 = time.time()
     try:
@@ -44,9 +47,12 @@ def main():
     ap.add_argument("--data-root", default="/data")
     ap.add_argument("--parallel", type=int, default=1)
     ap.add_argument("--only", default="", help="comma list of brain:house to run from the plan (e.g. the missing ones)")
+    ap.add_argument("--brain-module", default="", help="a .py file that calls scout.brains.register_brain(...)")
     a = ap.parse_args()
     os.environ["SCOUT_COMMIT"] = subprocess.run(["git", "-C", ROOT, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     os.environ["SCOUT_HOST"] = os.environ.get("SCOUT_HOST", "aws")
+    if a.brain_module:
+        os.environ["SCOUT_BRAIN_MODULE"] = os.path.abspath(a.brain_module)
     if a.plan:
         plan = json.load(open(a.plan))
         seed, explore = plan.get("seed", 0), plan.get("explore_s", a.explore_s)
