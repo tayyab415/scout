@@ -1,0 +1,11 @@
+72 episodes, 22 houses
+| hidden | threshold | held-out categories right |
+|---:|---:|---:|
+| 8 | 0.4 | 680/839 (0.810) |
+| 8 | 0.5 | 665/839 (0.793) |
+| 8 | 0.6 | 631/839 (0.752) |
+| 16 | 0.4 | 663/839 (0.790) |
+| 16 | 0.5 | 652/839 (0.777) |
+| 16 | 0.6 | 627/839 (0.747) |
+
+rule (confident first, then most recent; always yes) on the same categories: 629/839 (0.750)

@@ -1,12 +1,14 @@
-# Demo narration script (2:43)
+# Demo narration script (2:52)
 
 Opening line: **"Same robot. Same memory. Same question."**
 
 `scripts/demo_cut.py` assembles the video from one recorded episode (final3, Terra, house val_752) and its branch
-shot (`scripts/branch_video.py`). The cut is **2:43.067** long, and exploration plays at **12x**. Every clip is a
-real recording, and every number comes from the final leaderboard (`final3`). The silent cut is
-`demo_final_silent.mp4` in the [`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence)
-release. The narrator records the voice over it.
+shot (`scripts/branch_video.py`). The cut is **2:52.067** long, and exploration plays at **12x**. It is the released 2:43.067 silent cut with the
+student card (`scripts/student_card.py`, 9 s) inserted at 2:17.067, before the plug-in card. Every clip is a
+real recording. Every number comes from the final leaderboard (`final3`), except the student card's, which come from
+the live student run (`docs/results/final3_student/leaderboard.md`). The silent cut is
+`demo_final_silent_student.mp4` in the [`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence)
+release (the 2:43 cut without the card is `demo_final_silent.mp4`). The narrator records the voice over it.
 
 The times below are the cut's real boundaries. Leave the real-time branch quiet in places; it does not need talk
 throughout.
@@ -22,9 +24,10 @@ throughout.
 | 1:49.067–1:56.067 | Moved evidence | "Here is its earlier sighting, and the later image of that same spot." |
 | 1:56.067–2:03.067 | Unchanged evidence | "In the unchanged world, the sofa is still there. Both answers match the evaluator." |
 | 2:03.067–2:17.067 | Leaderboard | "Across thirty-two episodes, six pairs succeeded like this one. We report abstentions, wrong objects, timeouts and missing trials. The memory quiz is scored against what each camera saw." |
-| 2:17.067–2:26.067 | Plug-in interface | "Register your own brain, compare it on the same tasks, and score recorded episodes on a laptop." |
-| 2:26.067–2:34.067 | Hackathon contributions | "We built the controller, mapping, memory, interventions, scorers and interface during the hackathon, using the existing models and houses." |
-| 2:34.067–2:43.067 | Disclosure | "Exploration follows a fixed rule. Depth and pose are ideal. Terra stands in for Muse Spark. Targets are isolated objects." |
+| 2:17.067–2:26.067 | Student card | "Every episode is exported, so the environment trains brains too. We trained a 233-parameter network on earlier episodes from other houses. It learned which sightings to doubt. As the robot's brain in the eight unseen homes, it remembered best of all five brains. It is not better at the physical check." |
+| 2:26.067–2:35.067 | Plug-in interface | "Register your own brain, compare it on the same tasks, and score recorded episodes on a laptop." |
+| 2:35.067–2:43.067 | Hackathon contributions | "We built the controller, mapping, memory, interventions, scorers, interface and the student during the hackathon, using the existing models and houses." |
+| 2:43.067–2:52.067 | Disclosure | "Exploration follows a fixed rule. Depth and pose are ideal. Terra stands in for Muse Spark. Targets are isolated objects." |
 
 ## Who decides what (say it this way)
 
@@ -39,6 +42,7 @@ throughout.
 ## What must stay true on screen
 
 - Never relabel Terra as Muse Spark.
+- The student's quiz result is offline, on memories other brains built. Say "answers the memory quiz", not "explores better".
 - "Not found" never means "it detected the move".
 - Use the final leaderboard's numbers, including abstentions, wrong targets and episodes that did not run.
 - Never say "zero wrong verdicts in 64 arms". The outcomes are 16 correct, 10 abstained, 16 wrong target, 8 no answer

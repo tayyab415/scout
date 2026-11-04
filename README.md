@@ -31,7 +31,7 @@ robot actually saw.
 | --- | --- | --- |
 | Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo | walks, falls, gets back up |
 | Eyes | SAM 3.1 (open weights, `facebook/sam3.1`) | open-vocabulary object masks on the head camera |
-| Brain under test | GPT-6.1 Terra (stand-in for Muse Spark), Llama 4 Maverick, rules, random | when to re-check; which object a question is about; the answers |
+| Brain under test | GPT-6.1 Terra (stand-in for Muse Spark), Llama 4 Maverick, rules, random, and a 233-parameter network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
 | Worlds | ProcTHOR-10K houses from MolmoSpaces (CC BY 4.0), 800 train / 200 test | unseen homes |
 
 ## Built during the hackathon (Oct 27 - Nov 4, 2026)
@@ -44,6 +44,8 @@ The models and houses above were not built here. Everything else was.
 - The brain interface.
 - The evaluator: stable object ids, per-frame visibility, hidden interventions.
 - The branched moved / unchanged episodes, the scorers, and the synchronised video renderer.
+- The student: a 233-parameter trust network trained in seconds, on CPU, from the episodes the environment exports
+  (`src/scout/student/`, added 4 November).
 
 ## What the agent gets (observation contract)
 
@@ -63,7 +65,9 @@ Full setup from scratch is in `docs/setup.md`: accounts, the house download, ski
 
 ```bash
 uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
-.venv/bin/python -m pytest -q tests                      # CPU only: 74 tests, including six rounds of independent review
+.venv/bin/python -m pytest -q tests                      # CPU only: 81 tests, including six rounds of independent review
+python scripts/quiz_offline.py records                   # the memory quiz answered offline by any brain, scored by the environment
+python scripts/train_student.py --records <dev runs> --exclude-houses configs/frozen_final3.json   # retrain the student
 # score a real recorded episode without a GPU: see docs/setup.md section 5 (examples/sample_episode)
 modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain rules     # one episode, both arms (GPU)
 modal run scripts/modal_env.py::compare --houses-file final2_houses.json --tag mytag      # frozen brain comparison
@@ -90,6 +94,29 @@ MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is 
   - Llama 4 Maverick: 48/96, with 16 invalid replies;
   - random: 16/96.
 - **The body stays up:** 35 falls, and it got itself back up all 35 times.
+
+## The environment trains brains too
+
+![A 233-parameter network learned which sightings to doubt](assets/media/student_card.png)
+
+Every episode is exported: the memory table the brain saw and the evaluator's record of what was really in view.
+On 4 November we trained the smallest brain we could on 72 earlier episodes from 22 other houses: a
+**233-parameter** two-layer perceptron in plain numpy that reads one row of the memory table and says how far to
+trust it. It trains in seconds on a laptop CPU. Then it ran live as the robot's brain in the eight final-evaluation
+houses, same seed and budgets:
+
+| live, same 8 never-seen homes | memory quiz | verification arms correct | clean pairs |
+|---|---:|---:|---:|
+| **student (233 parameters, trained here)** | **106/112** | 5/16 | 1 |
+| GPT-6.1 Terra (Muse Spark stand-in) | 92/112 | 7/16 | 3 |
+| rules | 93/112 | 6/16 | 2 |
+| Llama 4 Maverick | 48/96 | 3/16 | 1 |
+| random | 16/96 | 0/16 | 0 |
+
+It is the best of the five at remembering what its camera saw, and it is not better at the physical check. Offline,
+answering from the memories the other brains built, it scores 370/416 against 333 for the rule brain. Run, every
+outcome and its own failures (it ignored the time in one question and checked the wrong dresser):
+`docs/results/final3_student/leaderboard.md`. Training, cross-validation and ablations: `docs/results/student.md`.
 
 Full leaderboard, every outcome category, provenance, retries and failures: `docs/results/environment_results.md`
 and `docs/results/final3/`. Public videos and the records of all 32 episodes: `docs/evidence.md`.

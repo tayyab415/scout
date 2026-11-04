@@ -9,6 +9,7 @@ hashes each file.
 | File | What it shows |
 | --- | --- |
 | [demo_final_silent.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/demo_final_silent.mp4) | The 2:43 demo cut before narration (`scripts/demo_cut.py`). |
+| [demo_final_silent_student.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/demo_final_silent_student.mp4) | The 2:52 cut: the 2:43 cut with the student card (`scripts/student_card.py`, 9 s) inserted at 2:17.067. |
 | [branch_terra_752.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/branch_terra_752.mp4) | The branch shot: one saved state split into two worlds, the sofa moved in one (`scripts/branch_video.py`). |
 | [social_20s.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/social_20s.mp4) | 20 s clip for posting. |
 
@@ -52,3 +53,18 @@ Expected output is committed in `docs/results/final3/rescore_from_release.txt`:
 Floor coverage needs the house layouts, so the script skips it. Everything else in the leaderboard is recomputed.
 Provenance per episode: `docs/results/final3/provenance.json` (see `provenance_reconstruction.md` for the fields
 filled after the run).
+
+## Records: the live student run
+
+[final3_student-records.tar.gz](https://github.com/tayyab415/scout/releases/download/final3-evidence/final3_student-records.tar.gz)
+(1.5 MB) holds the records of the 8 student episodes run after `final3` was frozen
+(`docs/results/final3_student/leaderboard.md`). `SHA256SUMS_student` in the release covers this archive and the
+2:52 cut.
+
+```bash
+curl -LO https://github.com/tayyab415/scout/releases/download/final3-evidence/final3_student-records.tar.gz
+mkdir records_student && tar xzf final3_student-records.tar.gz -C records_student
+python scripts/rescore_records.py records_student frozen_final3_student.json
+```
+
+Expected output: `docs/results/final3_student/rescore.txt`.

@@ -10,6 +10,7 @@ Brains:
   llm:<bedrock model id>   a language model (GPT-6.1 Terra stands in for Muse Spark; Llama 4 Maverick)
   rules                    fixed rules, no language model
   random                   random choices (a floor for the leaderboard)
+  student                  a 233-parameter trust network trained on Scout's own recorded episodes (src/scout/student/)
 """
 from __future__ import annotations
 
@@ -169,4 +170,7 @@ def make_brain(name: str):
         return RuleBrain()
     if name == "random":
         return RandomBrain()
+    if name == "student":
+        from .student.trust import StudentBrain
+        return StudentBrain()
     raise ValueError(f"unknown brain {name}")

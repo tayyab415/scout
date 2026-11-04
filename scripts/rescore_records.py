@@ -4,6 +4,7 @@ and the memory-quiz denominators.
     curl -LO https://github.com/tayyab415/scout/releases/download/final3-evidence/final3-records.tar.gz
     mkdir records && tar xzf final3-records.tar.gz -C records
     python scripts/rescore_records.py records
+    python scripts/rescore_records.py records_student frozen_final3_student.json   # the live student run
 
 Floor coverage needs the house layouts, so it is not recomputed here; everything else in the leaderboard is.
 """
@@ -20,7 +21,8 @@ KINDS = ["correct", "abstain", "wrong", "wrong target", "ineligible", "no answer
 
 def main():
     root = sys.argv[1]
-    plan = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "configs", "frozen_final3.json")))
+    plan_file = sys.argv[2] if len(sys.argv) > 2 else "frozen_final3.json"  # e.g. frozen_final3_student.json
+    plan = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "configs", plan_file)))
     out = defaultdict(lambda: defaultdict(int))
     quiz = defaultdict(lambda: [0, 0, 0])
     total = defaultdict(int)

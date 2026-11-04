@@ -1,0 +1,1556 @@
+{
+ "totals": {
+  "recorded | llama4-maverick": {
+   "n": 96,
+   "correct": 48,
+   "errors": 16,
+   "cited": 294,
+   "valid": 198,
+   "affirmative": 64,
+   "supported": 54,
+   "episodes": 6
+  },
+  "recorded | all": {
+   "n": 416,
+   "correct": 249,
+   "errors": 16,
+   "cited": 659,
+   "valid": 416,
+   "affirmative": 297,
+   "supported": 178,
+   "episodes": 26
+  },
+  "student | llama4-maverick": {
+   "n": 96,
+   "correct": 88,
+   "errors": 0,
+   "cited": 65,
+   "valid": 53,
+   "affirmative": 65,
+   "supported": 53,
+   "episodes": 6
+  },
+  "student | all": {
+   "n": 416,
+   "correct": 370,
+   "errors": 0,
+   "cited": 265,
+   "valid": 218,
+   "affirmative": 265,
+   "supported": 218,
+   "episodes": 26
+  },
+  "rules | llama4-maverick": {
+   "n": 96,
+   "correct": 81,
+   "errors": 0,
+   "cited": 78,
+   "valid": 57,
+   "affirmative": 78,
+   "supported": 57,
+   "episodes": 6
+  },
+  "rules | all": {
+   "n": 416,
+   "correct": 333,
+   "errors": 0,
+   "cited": 329,
+   "valid": 224,
+   "affirmative": 329,
+   "supported": 224,
+   "episodes": 26
+  },
+  "rules-exact | llama4-maverick": {
+   "n": 96,
+   "correct": 84,
+   "errors": 0,
+   "cited": 75,
+   "valid": 57,
+   "affirmative": 75,
+   "supported": 57,
+   "episodes": 6
+  },
+  "rules-exact | all": {
+   "n": 416,
+   "correct": 352,
+   "errors": 0,
+   "cited": 310,
+   "valid": 224,
+   "affirmative": 310,
+   "supported": 224,
+   "episodes": 26
+  },
+  "student-trust-all | llama4-maverick": {
+   "n": 96,
+   "correct": 83,
+   "errors": 0,
+   "cited": 75,
+   "valid": 54,
+   "affirmative": 75,
+   "supported": 54,
+   "episodes": 6
+  },
+  "student-trust-all | all": {
+   "n": 416,
+   "correct": 355,
+   "errors": 0,
+   "cited": 310,
+   "valid": 228,
+   "affirmative": 310,
+   "supported": 228,
+   "episodes": 26
+  },
+  "recorded | random": {
+   "n": 96,
+   "correct": 16,
+   "errors": 0,
+   "cited": 64,
+   "valid": 2,
+   "affirmative": 64,
+   "supported": 2,
+   "episodes": 6
+  },
+  "student | random": {
+   "n": 96,
+   "correct": 83,
+   "errors": 0,
+   "cited": 58,
+   "valid": 51,
+   "affirmative": 58,
+   "supported": 51,
+   "episodes": 6
+  },
+  "rules | random": {
+   "n": 96,
+   "correct": 75,
+   "errors": 0,
+   "cited": 76,
+   "valid": 52,
+   "affirmative": 76,
+   "supported": 52,
+   "episodes": 6
+  },
+  "rules-exact | random": {
+   "n": 96,
+   "correct": 79,
+   "errors": 0,
+   "cited": 72,
+   "valid": 52,
+   "affirmative": 72,
+   "supported": 52,
+   "episodes": 6
+  },
+  "student-trust-all | random": {
+   "n": 96,
+   "correct": 80,
+   "errors": 0,
+   "cited": 72,
+   "valid": 56,
+   "affirmative": 72,
+   "supported": 56,
+   "episodes": 6
+  },
+  "recorded | rules": {
+   "n": 112,
+   "correct": 93,
+   "errors": 0,
+   "cited": 87,
+   "valid": 61,
+   "affirmative": 87,
+   "supported": 61,
+   "episodes": 7
+  },
+  "student | rules": {
+   "n": 112,
+   "correct": 103,
+   "errors": 0,
+   "cited": 73,
+   "valid": 61,
+   "affirmative": 73,
+   "supported": 61,
+   "episodes": 7
+  },
+  "rules | rules": {
+   "n": 112,
+   "correct": 93,
+   "errors": 0,
+   "cited": 87,
+   "valid": 61,
+   "affirmative": 87,
+   "supported": 61,
+   "episodes": 7
+  },
+  "rules-exact | rules": {
+   "n": 112,
+   "correct": 99,
+   "errors": 0,
+   "cited": 81,
+   "valid": 61,
+   "affirmative": 81,
+   "supported": 61,
+   "episodes": 7
+  },
+  "student-trust-all | rules": {
+   "n": 112,
+   "correct": 100,
+   "errors": 0,
+   "cited": 81,
+   "valid": 63,
+   "affirmative": 81,
+   "supported": 63,
+   "episodes": 7
+  },
+  "recorded | terra (Muse Spark stand-in)": {
+   "n": 112,
+   "correct": 92,
+   "errors": 0,
+   "cited": 214,
+   "valid": 155,
+   "affirmative": 82,
+   "supported": 61,
+   "episodes": 7
+  },
+  "student | terra (Muse Spark stand-in)": {
+   "n": 112,
+   "correct": 96,
+   "errors": 0,
+   "cited": 69,
+   "valid": 53,
+   "affirmative": 69,
+   "supported": 53,
+   "episodes": 7
+  },
+  "rules | terra (Muse Spark stand-in)": {
+   "n": 112,
+   "correct": 84,
+   "errors": 0,
+   "cited": 88,
+   "valid": 54,
+   "affirmative": 88,
+   "supported": 54,
+   "episodes": 7
+  },
+  "rules-exact | terra (Muse Spark stand-in)": {
+   "n": 112,
+   "correct": 90,
+   "errors": 0,
+   "cited": 82,
+   "valid": 54,
+   "affirmative": 82,
+   "supported": 54,
+   "episodes": 7
+  },
+  "student-trust-all | terra (Muse Spark stand-in)": {
+   "n": 112,
+   "correct": 92,
+   "errors": 0,
+   "cited": 82,
+   "valid": 55,
+   "affirmative": 82,
+   "supported": 55,
+   "episodes": 7
+  }
+ },
+ "episodes": [
+  {
+   "episode": "llama4_procthor-10k-val_val_300_s0",
+   "house": "procthor-10k-val_val_300",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 9,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 34,
+    "citations": 54,
+    "affirmative": 11,
+    "affirmative_supported": 10
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "llama4_procthor-10k-val_val_322_s0",
+   "house": "procthor-10k-val_val_322",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 32,
+    "citations": 45,
+    "affirmative": 12,
+    "affirmative_supported": 10
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 9,
+    "affirmative": 9,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 8
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   },
+   "student-trust-all": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   }
+  },
+  {
+   "episode": "llama4_procthor-10k-val_val_330_s0",
+   "house": "procthor-10k-val_val_330",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 9,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 38,
+    "citations": 62,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 10
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 10
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 10
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 10
+   }
+  },
+  {
+   "episode": "llama4_procthor-10k-val_val_359_s0",
+   "house": "procthor-10k-val_val_359",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 0,
+    "n": 16,
+    "errors": 16,
+    "citations_valid": 0,
+    "citations": 0,
+    "affirmative": 0,
+    "affirmative_supported": 0
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 6
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 7
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 7
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 6
+   }
+  },
+  {
+   "episode": "llama4_procthor-10k-val_val_752_s0",
+   "house": "procthor-10k-val_val_752",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 8,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 41,
+    "citations": 65,
+    "affirmative": 14,
+    "affirmative_supported": 12
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "llama4_procthor-10k-val_val_893_s0",
+   "house": "procthor-10k-val_val_893",
+   "ran_by": "llama4-maverick",
+   "recorded": {
+    "correct": 10,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 53,
+    "citations": 68,
+    "affirmative": 14,
+    "affirmative_supported": 13
+   },
+   "student": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 12
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 15,
+    "affirmative": 15,
+    "affirmative_supported": 12
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 12
+   },
+   "student-trust-all": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 12
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_300_s0",
+   "house": "procthor-10k-val_val_300",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 0,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 0,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 0
+   },
+   "student": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 6
+   },
+   "rules": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 7
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 7
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 7
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_330_s0",
+   "house": "procthor-10k-val_val_330",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 1,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 0,
+    "citations": 9,
+    "affirmative": 9,
+    "affirmative_supported": 0
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 11
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 11
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 11
+   },
+   "student-trust-all": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 11
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_359_s0",
+   "house": "procthor-10k-val_val_359",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 3,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 0,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 0
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 7
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 7
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 8
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_489_s0",
+   "house": "procthor-10k-val_val_489",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 4,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 0,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 0
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 10
+   },
+   "rules": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 15,
+    "affirmative": 15,
+    "affirmative_supported": 10
+   },
+   "rules-exact": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 10
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_752_s0",
+   "house": "procthor-10k-val_val_752",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 5,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 1,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 1
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 10,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 10
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 11
+   }
+  },
+  {
+   "episode": "random_procthor-10k-val_val_893_s0",
+   "house": "procthor-10k-val_val_893",
+   "ran_by": "random",
+   "recorded": {
+    "correct": 3,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 1,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 1
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   },
+   "rules-exact": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   },
+   "student-trust-all": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_300_s0",
+   "house": "procthor-10k-val_val_300",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_322_s0",
+   "house": "procthor-10k-val_val_322",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 8
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 9,
+    "affirmative": 9,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 8
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   },
+   "student-trust-all": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 8
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_330_s0",
+   "house": "procthor-10k-val_val_330",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 9
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_359_s0",
+   "house": "procthor-10k-val_val_359",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 6
+   },
+   "student": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 6
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 6
+   },
+   "student-trust-all": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 7
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_489_s0",
+   "house": "procthor-10k-val_val_489",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 9,
+    "affirmative": 9,
+    "affirmative_supported": 6
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 6,
+    "affirmative": 6,
+    "affirmative_supported": 6
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 9,
+    "affirmative": 9,
+    "affirmative_supported": 6
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 6
+   },
+   "student-trust-all": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 7
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_752_s0",
+   "house": "procthor-10k-val_val_752",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 12
+   },
+   "student": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 11
+   },
+   "rules": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 12
+   },
+   "rules-exact": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 12
+   },
+   "student-trust-all": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 11
+   }
+  },
+  {
+   "episode": "rules_procthor-10k-val_val_893_s0",
+   "house": "procthor-10k-val_val_893",
+   "ran_by": "rules",
+   "recorded": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   },
+   "student": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 12
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 11
+   },
+   "student-trust-all": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 12
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_300_s0",
+   "house": "procthor-10k-val_val_300",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 27,
+    "citations": 31,
+    "affirmative": 11,
+    "affirmative_supported": 10
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 16,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_322_s0",
+   "house": "procthor-10k-val_val_322",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 22,
+    "citations": 29,
+    "affirmative": 11,
+    "affirmative_supported": 8
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 8
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 8,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 8
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_330_s0",
+   "house": "procthor-10k-val_val_330",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 21,
+    "citations": 31,
+    "affirmative": 13,
+    "affirmative_supported": 10
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 9
+   },
+   "rules": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   },
+   "rules-exact": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 9,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 9
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_359_s0",
+   "house": "procthor-10k-val_val_359",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 13,
+    "citations": 30,
+    "affirmative": 10,
+    "affirmative_supported": 5
+   },
+   "student": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 3,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 3
+   },
+   "rules": {
+    "correct": 9,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 5,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 5
+   },
+   "rules-exact": {
+    "correct": 10,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 5,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 5
+   },
+   "student-trust-all": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 4,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 4
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_489_s0",
+   "house": "procthor-10k-val_val_489",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 23,
+    "citations": 30,
+    "affirmative": 12,
+    "affirmative_supported": 10
+   },
+   "student": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 10,
+    "affirmative": 10,
+    "affirmative_supported": 7
+   },
+   "rules": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 13,
+    "affirmative": 13,
+    "affirmative_supported": 6
+   },
+   "rules-exact": {
+    "correct": 12,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 6
+   },
+   "student-trust-all": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 7,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 7
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_752_s0",
+   "house": "procthor-10k-val_val_752",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 33,
+    "citations": 37,
+    "affirmative": 14,
+    "affirmative_supported": 12
+   },
+   "student": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 11
+   },
+   "rules": {
+    "correct": 14,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 15,
+    "affirmative": 15,
+    "affirmative_supported": 11
+   },
+   "rules-exact": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 11,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 11
+   },
+   "student-trust-all": {
+    "correct": 15,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 12,
+    "citations": 14,
+    "affirmative": 14,
+    "affirmative_supported": 12
+   }
+  },
+  {
+   "episode": "terra_procthor-10k-val_val_893_s0",
+   "house": "procthor-10k-val_val_893",
+   "ran_by": "terra (Muse Spark stand-in)",
+   "recorded": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 16,
+    "citations": 26,
+    "affirmative": 11,
+    "affirmative_supported": 6
+   },
+   "student": {
+    "correct": 13,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 8,
+    "affirmative": 8,
+    "affirmative_supported": 6
+   },
+   "rules": {
+    "correct": 9,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 5,
+    "citations": 12,
+    "affirmative": 12,
+    "affirmative_supported": 5
+   },
+   "rules-exact": {
+    "correct": 10,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 5,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 5
+   },
+   "student-trust-all": {
+    "correct": 11,
+    "n": 16,
+    "errors": 0,
+    "citations_valid": 6,
+    "citations": 11,
+    "affirmative": 11,
+    "affirmative_supported": 6
+   }
+  }
+ ]
+}

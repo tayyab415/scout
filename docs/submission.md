@@ -43,7 +43,10 @@ Scout scores it:
 - **The body controller:** blended Motivo skills, turning to face a spot, and fall recovery.
 - **The evaluator:** object identities, per-frame visibility, hidden interventions, and snapshot/restore branching.
 - **The rest:** scorers, the brain interface, synchronised videos, and the frozen comparison on unseen homes.
-- **Testing:** 74 tests, written over six rounds of independent adversarial review, with recorded runs.
+- **A learned brain:** a 233-parameter network, trained in seconds on CPU from the episodes the environment
+  exports, that learned which of SAM 3.1's detections to trust. Run live in the eight final-evaluation homes, it
+  answered the memory quiz best of all five brains: 106/112, against 92 for Terra and 93 for rules.
+- **Testing:** 81 tests, written over six rounds of independent adversarial review, with recorded runs.
 
 ## Results
 
@@ -59,6 +62,9 @@ brain, a random brain). All 32 planned episodes ran; every one is counted, failu
 - **The memory quiz** is graded against what each robot's camera actually saw: Terra 92/112, rules 93/112,
   Llama 4 48/96 (16 invalid replies), random 16/96.
 - **The body fell 35 times and got itself back up 35 times.**
+- **The environment's exports train brains.** A 233-parameter numpy network trained on 72 earlier episodes from 22
+  other houses ran live in the same eight homes: memory quiz 106/112 (Terra 92, rules 93), but 1 clean verification
+  pair to Terra's 3. Run separately after the frozen evaluation: `docs/results/final3_student/leaderboard.md`.
 
 Leaderboard: `docs/results/final3/leaderboard.md`. Write-up with provenance and retries:
 `docs/results/environment_results.md`. Anyone can rescore every number from the public records on a laptop
@@ -76,4 +82,5 @@ Leaderboard: `docs/results/final3/leaderboard.md`. Write-up with provenance and 
 > Same robot. Same memory. Same question. We moved the sofa in one world and not the other.
 > Memory can't tell the two worlds apart. Looking can.
 > Scout: a physics-simulated home that tests whether a robot can verify what it remembers. Meta Motivo body, SAM 3.1 eyes,
-> plug in any brain. github.com/tayyab415/scout
+> plug in any brain. Our 233-parameter network, trained on Scout's own episodes, out-remembers a frontier LLM.
+> github.com/tayyab415/scout
