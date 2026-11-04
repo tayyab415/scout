@@ -116,3 +116,24 @@ SAM and no language model. Result on 3 Nov:
   - SAM 3.1's `torch.compile` mode, which its documentation says gives about 2×.
 
   Both were left out so the frozen comparison kept one detection pipeline.
+
+### Measured: SAM 3.1 weights in image mode (`scripts/sam_speed_test.py`, 4 Nov, A10G)
+
+The SAM 3.1 checkpoint's detector weights were loaded into SAM 3's image model, which encodes each frame once and
+then runs the 16 text prompts. Test set: 20 real head-camera frames from final3 (Muse Spark, val_752).
+
+| | Current pipeline (one video session per category) | Image mode |
+| --- | --- | --- |
+| Seconds per look | 5.23 | 1.67 (3.1x faster) |
+| Detections (score >= 0.5) | 28 | 33 |
+| Same detect / no-detect decision per category | | 98.4% |
+| Mask IoU when both detect | | 0.98 |
+
+**Caveat:** 4 weights of one neck level (`backbone.vision_backbone.convs.3.*`) have no counterpart in the
+checkpoint, so they stay randomly initialised. The 5 extra detections have not been checked against the truth. Not
+adopted for the comparison; it is the first thing to validate for faster runs.
+
+### Physics options when the house is attached
+
+MuJoCo warns about an attach conflict and keeps the humanoid's physics options (solver, gravity, contact limits)
+instead of the house file's. That is intended: Motivo was trained with HumEnv's settings.

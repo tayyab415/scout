@@ -1,0 +1,55 @@
+Started 2026-11-04T03:36:26.563030+00:00
+Command python /opt/scout/scripts/replay_local.py --data-root /data
+house procthor-10k-val_val_935: reset, walk 2 s, snapshot
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING: Attach conflict when attaching 'val_935' to 'humanoid', policy is 'warning'
+noslip_iterations: parent has 0 (default), child has 4, keeping parent value
+impratio: parent has 1 (default), child has 10, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+jacobian: parent has 2 (default), child has 1, keeping parent value
+gravity: parent has 0 0 -9.81 (default), child has 0 0 -9.8, keeping parent value
+znear: parent has 0.01 (default), child has 0.001, keeping parent value
+njmax: parent has -1 (default), child has 5000, keeping parent value
+nconmax: parent has -1 (default), child has 5000, keeping parent value
+
+/opt/scout/scripts/../src/scout/world/house.py:102: UserWarning: Attach conflict when attaching 'val_935' to 'humanoid', policy is 'warning'
+noslip_iterations: parent has 0 (default), child has 4, keeping parent value
+impratio: parent has 1 (default), child has 10, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+jacobian: parent has 2 (default), child has 1, keeping parent value
+gravity: parent has 0 0 -9.81 (default), child has 0 0 -9.8, keeping parent value
+znear: parent has 0.01 (default), child has 0.001, keeping parent value
+njmax: parent has -1 (default), child has 5000, keeping parent value
+nconmax: parent has -1 (default), child has 5000, keeping parent value
+  return world.compile()
+run 1: 120 steps from the snapshot, ended at t=6.00 s
+run 2: 120 steps from the snapshot, ended at t=6.00 s
+{
+ "house": "procthor-10k-val_val_935",
+ "steps": 120,
+ "max_abs_qpos_diff": 5.806910507999419e-12,
+ "n_images": 8,
+ "images_identical": 7,
+ "max_pixel_diff": [
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "frac_pixels_differing": [
+  0.0,
+  4e-06,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "gpu": "NVIDIA A10G"
+}
+PROCESS EXIT 0 | recording wall time 18.00s

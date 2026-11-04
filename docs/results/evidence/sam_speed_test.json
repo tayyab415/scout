@@ -1,0 +1,22 @@
+{
+ "load_report": {
+  "loaded": 1166,
+  "missing": 4,
+  "unexpected": 36,
+  "missing_examples": [
+   "backbone.vision_backbone.convs.3.conv_1x1.weight",
+   "backbone.vision_backbone.convs.3.conv_1x1.bias",
+   "backbone.vision_backbone.convs.3.conv_3x3.weight",
+   "backbone.vision_backbone.convs.3.conv_3x3.bias"
+  ]
+ },
+ "frames": 20,
+ "sec_per_look": {
+  "sam31_video_per_category": 5.228,
+  "sam31_image_mode": 1.665
+ },
+ "detections_ref": 28,
+ "detections_new": 33,
+ "agree_presence": 0.984,
+ "mean_iou_when_both": 0.98
+}
