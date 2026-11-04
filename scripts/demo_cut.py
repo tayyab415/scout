@@ -135,7 +135,7 @@ def main():
               "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
               "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
               "'Not found' means the depth camera now sees past the remembered spot. It never claims to have seen the move.",
-              "GPT-6.1 Terra stands in for Muse Spark until the Meta Model API key is available.",
+              "The brain in these runs is GPT-6.1 Terra on AWS Bedrock, standing in for Muse Spark. Any model plugs in.",
               "The memory-persistence answer is a rule: whatever memory says, without looking.",
               "Targets are objects with no look-alike within 2.5 m, so the question names one identifiable object."],
              [34, 22, 22, 22, 22, 22, 22]), 11)
