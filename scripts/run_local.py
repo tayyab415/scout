@@ -59,7 +59,10 @@ def main():
     print(f"{len(jobs)} episodes to run", flush=True)
     log = f"{a.data_root}/scout/env/{a.tag}/run_local.jsonl"
     os.makedirs(os.path.dirname(log), exist_ok=True)
-    with ProcessPoolExecutor(max_workers=a.parallel) as ex:
+    import multiprocessing as mp
+    # one fresh process per episode: a worker that keeps the previous episode's GPU memory (SAM 3.1, renderers)
+    # runs the next one out of memory
+    with ProcessPoolExecutor(max_workers=a.parallel, mp_context=mp.get_context("spawn"), max_tasks_per_child=1) as ex:
         for r in ex.map(_one, jobs):
             print("EP", json.dumps(r, default=str), flush=True)
             open(log, "a").write(json.dumps(r, default=str) + "\n")
