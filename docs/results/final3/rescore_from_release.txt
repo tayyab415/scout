@@ -1,0 +1,16 @@
+| brain | arm | correct | abstain | wrong | wrong target | ineligible | no answer | not run |
+| llama4 | moved | 1 | 2 | 0 | 0 | 0 | 2 | 3 |
+| llama4 | unchanged | 2 | 2 | 0 | 2 | 0 | 0 | 2 |
+| random | moved | 0 | 0 | 0 | 4 | 0 | 1 | 3 |
+| random | unchanged | 0 | 0 | 0 | 6 | 0 | 0 | 2 |
+| rules | moved | 2 | 2 | 0 | 2 | 0 | 1 | 1 |
+| rules | unchanged | 4 | 1 | 0 | 2 | 0 | 0 | 1 |
+| spark | moved | 4 | 1 | 0 | 0 | 0 | 2 | 1 |
+| spark | unchanged | 3 | 2 | 0 | 0 | 0 | 2 | 1 |
+all arms: 16 correct, 10 abstain, 0 wrong, 16 wrong target, 0 ineligible, 8 no answer, 14 not run
+
+memory quiz (questions / correct / errors):
+  llama4: 96 / 48 / 16
+  random: 96 / 16 / 0
+  rules: 112 / 93 / 0
+  spark: 112 / 92 / 0

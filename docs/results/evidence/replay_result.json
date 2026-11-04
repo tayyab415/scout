@@ -1,0 +1,28 @@
+{
+ "house": "procthor-10k-val_val_935",
+ "steps": 120,
+ "max_abs_qpos_diff": 5.806910507999419e-12,
+ "n_images": 8,
+ "images_identical": 7,
+ "max_pixel_diff": [
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "frac_pixels_differing": [
+  0.0,
+  4e-06,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "gpu": "NVIDIA A10G"
+}

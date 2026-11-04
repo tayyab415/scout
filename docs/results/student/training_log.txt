@@ -1,0 +1,4 @@
+72 episodes, 22 houses (4 held out for early stopping), 1985 remembered objects, 1372 real (69.1%)
+233 parameters; best epoch 43, val loss 0.304; val accuracy 0.781 (majority 0.680)
+largest feature effects (+1 sd): best_confidence +0.146, is_dining_table +0.105, is_painting +0.064, is_bathtub -0.053, is_chair -0.047, is_bed +0.045, log_misses -0.040, is_television -0.033
+saved /home/tayyabkhan/scout/assets/brains/student_trust.npz

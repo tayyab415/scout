@@ -1,0 +1,235 @@
+{
+ "episode": "spark_procthor-10k-val_val_752_s0",
+ "house": "procthor-10k-val_val_752",
+ "brain": "spark (Muse Spark stand-in)",
+ "target": {
+  "instance": 32,
+  "category": "sofa",
+  "from_xy": [
+   3.663,
+   0.425
+  ],
+  "track_at_freeze": 13,
+  "t_freeze": 240.0,
+  "reference_sighting_t": 232.0,
+  "sightings_at_freeze": 14,
+  "dest_xy": [
+   9.85,
+   12.65
+  ],
+  "dest_room": "Bedroom",
+  "question": "Is the sofa you saw at 232 s still where it was?"
+ },
+ "no_target_reason": null,
+ "unchanged": {
+  "falls": 3,
+  "got_up": 3,
+  "ended": null,
+  "checks": {
+   "n": 9,
+   "correct": 2,
+   "wrong": 2,
+   "abstain": 5
+  },
+  "verify": {
+   "arm": "unchanged",
+   "verdict": "still there",
+   "outcome": "correct",
+   "say": "Yes. I saw the sofa there at 232 s, and I just saw it there again."
+  },
+  "verify_recall": {
+   "arm": "unchanged",
+   "verdict": "still there",
+   "outcome": "correct",
+   "say": "From memory, without looking: the sofa should still be there (last seen at 232 s)."
+  },
+  "quiz": {
+   "n": 16,
+   "accuracy": 0.938,
+   "errors": 0,
+   "said_seen": 14,
+   "said_seen_correct": 13,
+   "observable": 13,
+   "recall": 1.0,
+   "rows": [
+    {
+     "category": "bed",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "sofa",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "television",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "dining table",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "fridge",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "kitchen counter",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "chair",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "armchair",
+     "observable": false,
+     "said_seen": false,
+     "located": null,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "floor lamp",
+     "observable": false,
+     "said_seen": false,
+     "located": null,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "painting",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "laptop",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "toilet",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "sink",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "dresser",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    },
+    {
+     "category": "bathtub",
+     "observable": false,
+     "said_seen": true,
+     "located": false,
+     "correct": false,
+     "error": false
+    },
+    {
+     "category": "house plant",
+     "observable": true,
+     "said_seen": true,
+     "located": true,
+     "correct": true,
+     "error": false
+    }
+   ]
+  },
+  "cite": {
+   "cited": 37,
+   "valid": 33,
+   "invalid_id": 0,
+   "future": 0,
+   "wrong_category": 0,
+   "not_visible": 4,
+   "affirmative": 14,
+   "affirmative_supported": 12
+  },
+  "explore": {
+   "floor_seen": 1.0,
+   "rooms": 5,
+   "rooms_total": 5,
+   "walked_m": 92.6,
+   "stuck": 3,
+   "idle_frac": 0.482
+  }
+ },
+ "moved": {
+  "falls": 3,
+  "got_up": 3,
+  "ended": null,
+  "checks": {
+   "n": 9,
+   "correct": 2,
+   "wrong": 2,
+   "abstain": 5
+  },
+  "verify": {
+   "arm": "moved",
+   "verdict": "not found",
+   "outcome": "correct",
+   "say": "I saw the sofa there at 232 s. I could not find it there now: the spot is empty."
+  },
+  "verify_recall": {
+   "arm": "moved",
+   "verdict": "still there",
+   "outcome": "wrong",
+   "say": "From memory, without looking: the sofa should still be there (last seen at 232 s)."
+  },
+  "explore": {
+   "floor_seen": 1.0,
+   "rooms": 5,
+   "rooms_total": 5,
+   "walked_m": 92.6,
+   "stuck": 3,
+   "idle_frac": 0.482
+  }
+ }
+}

@@ -1,0 +1,54 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/tayyabkhn343/main/ap-GNgLph2DuFFt1Spl9OzmQi
+✓ Created objects.
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/modal_env.py
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/demo_cut.py
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/score_env.py
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/env_video.py
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/../configs
+├── ✓ Uploaded /home/tayyabkhan/scout/scripts/../src
+├── ✓ Created Function render.
+├── ✓ Created Function demo_remote.
+├── ✓ Created Function run_episode.
+├── ✓ Created Function replay_check.
+├── ✓ Created Function score_remote.
+└── ✓ Created Function check_evidence.
+Stopping app - user stopped from CLI.
+complete: 24 to run: [('rules', 'procthor-10k-val_val_330'), ('random', 'procthor-10k-val_val_893'), ('random', 'procthor-10k-val_val_322'), ('random', 'procthor-10k-val_val_359'), ('random', 'procthor-10k-val_val_752'), ('random', 'procthor-10k-val_val_300'), ('random', 'procthor-10k-val_val_489'), ('random', 'procthor-10k-val_val_330')]
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /home/tayyabkhan/scout/scripts/modal_env.py:447 in resume                    │
+│                                                                              │
+│   446 │   print("complete:", len(have), "to run:", todo, flush=True)         │
+│ ❱ 447 │   calls = [(b, h, run_episode.spawn(h, b, plan.get("seed", 0), tag,  │
+│   448 │   for b, h, c in calls:                                              │
+│                                                                              │
+│ /home/tayyabkhan/.venvs/modal/lib/python3.12/site-packages/modal/_object.py: │
+│ 49 in wrapped                                                                │
+│                                                                              │
+│    48 │   │   await self.hydrate()                                           │
+│ ❱  49 │   │   return await method(self, *args, **kwargs)                     │
+│    50                                                                        │
+│                                                                              │
+│ /home/tayyabkhan/.venvs/modal/lib/python3.12/site-packages/modal/_functions. │
+│ py:2241 in spawn                                                             │
+│                                                                              │
+│   2240 │   │   else:                                                         │
+│ ❱ 2241 │   │   │   invocation = await self._call_function_nowait(args, kwarg │
+│   2242                                                                       │
+│                                                                              │
+│ /home/tayyabkhan/.venvs/modal/lib/python3.12/site-packages/modal/_functions. │
+│ py:2027 in _call_function_nowait                                             │
+│                                                                              │
+│   2026 │   ) -> _Invocation:                                                 │
+│ ❱ 2027 │   │   return await _Invocation.create(                              │
+│   2028 │   │   │   self,                                                     │
+│                                                                              │
+│ /home/tayyabkhan/.venvs/modal/lib/python3.12/site-packages/modal/_functions. │
+│ py:203 in create                                                             │
+│                                                                              │
+│    202 │   │   else:                                                         │
+│ ❱  203 │   │   │   response = await client._stub.FunctionMap(request)        │
+│    204                                                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ConflictError: The app is stopped or disabled

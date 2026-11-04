@@ -1,0 +1,21 @@
+{
+ "houses": [
+  "procthor-10k-val_val_893",
+  "procthor-10k-val_val_322",
+  "procthor-10k-val_val_167",
+  "procthor-10k-val_val_359",
+  "procthor-10k-val_val_752",
+  "procthor-10k-val_val_300",
+  "procthor-10k-val_val_489",
+  "procthor-10k-val_val_330"
+ ],
+ "brains": [
+  "spark",
+  "llama4",
+  "rules",
+  "random"
+ ],
+ "explore_s": 240.0,
+ "seed": 0,
+ "tag": "final3"
+}
