@@ -1,0 +1,60 @@
+{
+ "episode": "spark_procthor-10k-val_val_752_s0",
+ "house": "procthor-10k-val_val_752",
+ "brain": "spark (Muse Spark stand-in)",
+ "seed": 0,
+ "explore_s": 240.0,
+ "ask_after_s": 20.0,
+ "answer_timeout_s": 90.0,
+ "start": {
+  "xy": [
+   9.15,
+   5.75
+  ],
+  "yaw": -1.446
+ },
+ "explore_end": "time",
+ "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
+ "observation_contract": "head RGB-D 512x512, 75 deg FOV, 20 deg down; ideal depth; exact head-camera pose and body xy/yaw from the simulator (perfect odometry); SAM 3.1 detections every 1 s; map from depth every 0.5 s",
+ "target": {
+  "instance": 32,
+  "category": "sofa",
+  "from_xy": [
+   3.663,
+   0.425
+  ],
+  "track_at_freeze": 13,
+  "t_freeze": 240.0,
+  "reference_sighting_t": 232.0,
+  "sightings_at_freeze": 14,
+  "dest_xy": [
+   9.85,
+   12.65
+  ],
+  "dest_room": "Bedroom",
+  "question": "Is the sofa you saw at 232 s still where it was?"
+ },
+ "arms": {
+  "unchanged": {
+   "end": "stopped",
+   "moved": null
+  },
+  "moved": {
+   "end": "stopped",
+   "moved": {
+    "t": 240.0,
+    "instance": 32,
+    "category": "sofa",
+    "from_xy": [
+     3.663,
+     0.425
+    ],
+    "to_xy": [
+     9.85,
+     12.65
+    ]
+   }
+  }
+ },
+ "wall_minutes": 13.3
+}

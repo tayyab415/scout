@@ -45,8 +45,9 @@ modal run scripts/modal_env.py::replay                           # branch replay
 
 ## 5. Score a recorded episode without a GPU
 
-`examples/sample_episode/` is one real episode: logs, memory, evaluator records, maps, the head frames the evidence
-cards cite, and that house's layout.
+`examples/sample_episode/` is one real episode from the final evaluation (`final3`, Muse Spark, house val_752): logs,
+memory, evaluator records, maps, the head frames the evidence cards cite, and that house's layout. The physical check
+is correct in both worlds; the memory-persistence rule is wrong in the moved one.
 
 ```bash
 .venv/bin/python -c "

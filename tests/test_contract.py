@@ -205,3 +205,15 @@ def test_compose_runs_end_to_end_on_a_recorded_episode(tmp_path):
             Image.fromarray(np.zeros((512, 512, 3), np.uint8)).save(p)
     env_video.compose(str(d), "moved", str(tmp_path / "out.mp4"))
     assert imageio.get_reader(str(tmp_path / "out.mp4")).count_frames() >= n
+
+
+def test_public_sample_is_a_verified_pair():
+    """examples/sample_episode (final3, Muse Spark, val_752): the check is right in both worlds and bound to the frozen
+    sofa; the memory-persistence rule is right only where nothing moved."""
+    import glob
+    from scout.env.scoring import score_episode
+    from scout.world.layout import Layout
+    d = os.path.join(ROOT, "examples/sample_episode")
+    r = score_episode(d, Layout.load(glob.glob(d + "/layout_*.npz")[0]))
+    assert r["unchanged"]["verify"]["outcome"] == "correct" and r["moved"]["verify"]["outcome"] == "correct"
+    assert r["unchanged"]["verify_recall"]["outcome"] == "correct" and r["moved"]["verify_recall"]["outcome"] == "wrong"
