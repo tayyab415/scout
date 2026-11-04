@@ -105,7 +105,9 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
 
 **What final3 shows:**
 
-- **The physical check gave 0 wrong verdicts in all 64 arms.** When it was not sure, it abstained.
+- **Verification outcomes over all 64 arms:** 16 correct, 10 abstained, 16 wrong target, 8 no answer in time,
+  14 not run. The separate `wrong` category (right object, wrong verdict) is 0. These are prompted
+  verification outcomes; the agent's own re-checks are scored separately in the leaderboard.
 - **The memory-persistence rule was never right in a moved arm** (0 for every brain). In the unchanged arms it was
   right whenever the brain picked the right object: terra 7, rules 5, llama4 3.
 - **Clean verification pairs** (the check correct in both arms, the rule correct when unchanged and wrong when
@@ -135,9 +137,12 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
 - **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `us.openai.gpt-6.1-terra` and
   `us.meta.llama4-maverick-17b-instruct-v1:0` on Bedrock (us-east-1).
 
-**Recordings:** every episode's arm videos are in `s3://meta-hackathon-570044538587/scout/env/final3/<episode>/`,
-including the failures and the no-target episodes (`explore_only.mp4`). The demo cut, branch shot and social clip
-are in `s3://meta-hackathon-570044538587/scout/media/`.
+**Recordings and records:** public, no credentials needed, in the GitHub release
+[`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence): the demo cut, branch shot,
+replay recording, two failure recordings and the records of all 32 episodes. `docs/evidence.md` lists each file.
+`scripts/rescore_records.py` rebuilds the outcome table and quiz denominators from those records on a CPU; its output
+is in `final3/rescore_from_release.txt` and matches the table above. The full set of arm videos (about 7 GB) stays in
+the team's S3 bucket.
 
 ## Branch replay
 
@@ -145,5 +150,5 @@ are in `s3://meta-hackathon-570044538587/scout/media/`.
 
 - **Modal L40S:** maximum qpos difference 3.9e-12; 3 of 8 compared head frames identical.
 - **AWS A10G:** 5.8e-12; 7 of 8 identical (`docs/results/evidence/replay_check.txt`, `replay_result.json`; recording
-  in `s3://.../scout/evidence/replay_check.mp4`).
-- **Remaining differences:** at most 1 intensity level, in at most 0.002% of pixels (GPU rounding).
+  in the `final3-evidence` release).
+- **Remaining differences:** at most 1 intensity level, in at most 0.002% of pixels. We have not isolated the cause.

@@ -9,16 +9,17 @@
 ## Description
 
 Home robots answer questions from memory: "Is the sofa still in the living room?" But the world changes when
-they are not looking. Scout is an open simulation environment that tests whether a robot can tell what it knows from
-what it needs to check.
+they are not looking. Scout is an open simulation environment that tests whether a robot can verify what it
+remembers.
 
 - **The setup.** A Meta Motivo humanoid explores a house it has never seen, in full physics, through a head camera.
   SAM 3.1 recognises objects. Depth builds the robot's own map. Every sighting is remembered with the frame it came
   from.
 - **The two worlds.** Then the episode branches from one physics snapshot into two worlds. In one, nothing changes.
   In the other, we quietly move an object. Both copies of the robot get the identical question.
-- **What it shows.** Answering from memory says "still there" in both worlds, so it is wrong in one of them. The
-  robot that walks back and looks gets both right: its depth camera sees past the spot where the object was.
+- **What it shows.** The baseline is a fixed memory-persistence rule: it answers from memory without looking and
+  calls no model. It says "still there" in both worlds, so it is wrong in one of them. The robot that walks back and
+  looks can get both right: its depth camera sees past the spot where the object was.
 
 Brains are plug-ins. Any model decides when to re-check, which memory a question is about, and how to answer.
 Scout scores it:
@@ -42,21 +43,37 @@ Scout scores it:
 - **The body controller:** blended Motivo skills, turning to face a spot, and fall recovery.
 - **The evaluator:** object identities, per-frame visibility, hidden interventions, and snapshot/restore branching.
 - **The rest:** scorers, the brain interface, synchronised videos, and the frozen comparison on unseen homes.
-- **Testing:** 70+ tests, including five rounds of independent adversarial review.
+- **Testing:** 74 tests, written over six rounds of independent adversarial review, with recorded runs.
 
 ## Results
 
-See `runs/env/final3/leaderboard.md` and `docs/results/environment_results.md` in the repository: 8 never-seen
-houses × 4 brains, every planned episode listed, failures included. The final numbers go here after the final run.
+Final evaluation: 8 ProcTHOR homes the system had never seen × 4 brains (GPT-6.1 Terra, Llama 4 Maverick, a rule
+brain, a random brain). All 32 planned episodes ran; every one is counted, failures included.
+
+- **Six clean verification pairs out of 32 episodes.** In each, the robot checked the right object and answered
+  correctly in both worlds, while the memory-persistence rule was wrong in the moved world. Four are Terra or
+  Llama 4; two are the rule brain.
+- **All 64 verification arms:** 16 correct, 10 abstained, 16 wrong target (mostly the random brain), 8 no answer in
+  time, 14 not run (no eligible target). None checked the right object and gave the wrong verdict.
+- **The memory-persistence rule was right 0 times when the object had moved,** for every brain.
+- **The memory quiz** is graded against what each robot's camera actually saw: Terra 92/112, rules 93/112,
+  Llama 4 48/96 (16 invalid replies), random 16/96.
+- **The body fell 35 times and got itself back up 35 times.**
+
+Leaderboard: `docs/results/final3/leaderboard.md`. Write-up with provenance and retries:
+`docs/results/environment_results.md`. Anyone can rescore every number from the public records on a laptop
+(`docs/evidence.md`).
 
 ## Links
 
 - Repo: https://github.com/tayyab415/scout
 - Demo video: (to be added after recording)
+- Evidence (silent demo cut, branch shot, replay, failures, test recordings, records of all 32 episodes):
+  https://github.com/tayyab415/scout/releases/tag/final3-evidence
 
 ## Short post for X (draft)
 
 > Same robot. Same memory. Same question. We moved the sofa in one world and not the other.
 > Memory can't tell the two worlds apart. Looking can.
-> Scout: a physics-simulated home that tests whether a robot's memory is still true. Meta Motivo body, SAM 3.1 eyes,
+> Scout: a physics-simulated home that tests whether a robot can verify what it remembers. Meta Motivo body, SAM 3.1 eyes,
 > plug in any brain. github.com/tayyab415/scout

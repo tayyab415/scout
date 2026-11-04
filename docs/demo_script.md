@@ -1,23 +1,30 @@
-# 3-minute demo script
+# Demo narration script (2:43)
 
-Opening line: **"Can a robot verify what it remembers?"**
+Opening line: **"Same robot. Same memory. Same question."**
 
-`scripts/demo_cut.py` assembles the video, under 3:00, from one recorded episode and its branch shot
-(`scripts/branch_video.py`). Every clip is a real recording;
-every number comes from the final leaderboard (`final3`). The narrator records the voice over the cut.
+`scripts/demo_cut.py` assembles the video from one recorded episode (final3, Terra, house val_752) and its branch
+shot (`scripts/branch_video.py`). The cut is **2:43.067** long, and exploration plays at **12x**. Every clip is a
+real recording, and every number comes from the final leaderboard (`final3`). The silent cut is
+`demo_final_silent.mp4` in the [`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence)
+release. The narrator records the voice over it.
 
-| Time (approx.) | On screen | Voice-over (read as written, or adapt) |
+The times below are the cut's real boundaries. Leave the real-time branch quiet in places; it does not need talk
+throughout.
+
+| Video time | Screen | Suggested narration |
 | --- | --- | --- |
-| 0:00-0:14 | Hook: the last 10 s of the split (both worlds answering), then the graded verdict card | "Same robot. Same memory. Same question. In one world we moved the sofa; in the other we didn't. Memory can't tell the two worlds apart. Looking can." |
-| 0:14-0:20 | Title card: "A physics-simulated home that tests whether a robot's memory is still true." | "This is Scout." |
-| 0:20-0:45 | Exploration, three panels, labelled "10x playback" | "A Meta Motivo humanoid, in full physics, explores a home it has never seen. SAM 3.1 recognises objects in its head camera; depth builds its own map; every object is pinned where it was seen, with the frame it was seen in." |
-| 0:45-1:50 | The split, in real time: World A and World B side by side. The world that finishes first freezes with a label. World B reaches the empty spot around 303 s. | "Here we branch the episode from one physics snapshot. In World B we quietly move the sofa. Both robots get the same question. The brain picks which memory it is about. The body walks back, turns to face the spot, and looks. In World A the sofa is there. In World B its depth camera sees straight past where the sofa was." |
-| 1:50-1:58 | Verdict card | "From memory alone, a fixed persistence rule, the answer is 'still there' in both worlds, so it's wrong in one. Looking gets both right." |
-| 1:58-2:16 | Evidence cards (moved, unchanged), coloured by the scorer | "Every answer cites the frame it is based on." |
-| 2:16-2:32 | Leaderboard | "Any brain plugs in. On eight homes it had never seen: correct, abstained and wrong, with denominators, plus the memory quiz graded against what each camera actually saw." |
-| 2:32-2:42 | Plug-in card | "Register a brain in three lines, run it, and score recorded episodes on a laptop." |
-| 2:42-2:51 | Built during the hackathon | "Everything on this card was built this week; the models and houses were used as is." |
-| 2:51-3:00 | Disclosure card | "Exploration is a fixed rule; depth and pose come from the simulator; the brain here is GPT-6.1 Terra standing in for Muse Spark. Every failure is in the repo." |
+| 0:00–0:08 | Both worlds, decisive look and answer | "Same robot. Same memory. Same question. We moved the sofa in one world. Watch it check." |
+| 0:08–0:11 | Branch verdict | "Remembering says yes. Looking gives two different answers." |
+| 0:11–0:16 | Title | "This is Scout, an open environment for testing embodied memory." |
+| 0:16–0:36 | Exploration, 12x playback | "The body is Meta Motivo, moving in physics. SAM 3.1 recognises objects through its head camera. Depth builds its floor map. Each sighting keeps its location, time and image. This exploration is shown at twelve times speed." |
+| 0:36–1:43.067 | Full branch, real time | "We split one saved state into two worlds. In one, the evaluator moves the sofa without telling the robot. Both copies get the same question. The brain picks the remembered object; the controller walks back and looks." Pause. "The first copy sees the sofa and finishes. Its panel freezes while the other keeps checking." Near 1:39: "Now the second camera sees past the remembered spot. The sofa is absent there." |
+| 1:43.067–1:49.067 | Branch verdict | "The memory-persistence rule assumes the sofa stayed put. The physical check distinguishes these two worlds." |
+| 1:49.067–1:56.067 | Moved evidence | "Here is its earlier sighting, and the later image of that same spot." |
+| 1:56.067–2:03.067 | Unchanged evidence | "In the unchanged world, the sofa is still there. Both answers match the evaluator." |
+| 2:03.067–2:17.067 | Leaderboard | "Across thirty-two episodes, six pairs succeeded like this one. We report abstentions, wrong objects, timeouts and missing trials. The memory quiz is scored against what each camera saw." |
+| 2:17.067–2:26.067 | Plug-in interface | "Register your own brain, compare it on the same tasks, and score recorded episodes on a laptop." |
+| 2:26.067–2:34.067 | Hackathon contributions | "We built the controller, mapping, memory, interventions, scorers and interface during the hackathon, using the existing models and houses." |
+| 2:34.067–2:43.067 | Disclosure | "Exploration follows a fixed rule. Depth and pose are ideal. Terra stands in for Muse Spark. Targets are isolated objects." |
 
 ## Who decides what (say it this way)
 
@@ -34,3 +41,6 @@ every number comes from the final leaderboard (`final3`). The narrator records t
 - Never relabel Terra as Muse Spark.
 - "Not found" never means "it detected the move".
 - Use the final leaderboard's numbers, including abstentions, wrong targets and episodes that did not run.
+- Never say "zero wrong verdicts in 64 arms". The outcomes are 16 correct, 10 abstained, 16 wrong target, 8 no answer
+  and 14 not run. The separate `wrong` category is 0. These are prompted verification outcomes; the agent's own
+  re-checks are scored separately.

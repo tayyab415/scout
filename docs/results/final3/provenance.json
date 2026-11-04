@@ -2,101 +2,145 @@
  {
   "episode": "llama4_procthor-10k-val_val_167_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": null,
   "no_target_reason": "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)",
-  "wall_minutes": 8.4
+  "wall_minutes": 8.4,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_300_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "sofa",
   "no_target_reason": null,
-  "wall_minutes": 16.0
+  "wall_minutes": 16.0,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_322_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 13.1
+  "wall_minutes": 13.1,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_330_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 10.5
+  "wall_minutes": 10.5,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_359_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 15.8
+  "wall_minutes": 15.8,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_489_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": null,
   "no_target_reason": "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)",
-  "wall_minutes": 8.1
+  "wall_minutes": 8.1,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_752_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "chair",
   "no_target_reason": null,
-  "wall_minutes": 15.1
+  "wall_minutes": 15.1,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "llama4_procthor-10k-val_val_893_s0",
   "brain": "llama4-maverick",
-  "brain_model": null,
+  "brain_model": "us.meta.llama4-maverick-17b-instruct-v1:0",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "television",
   "no_target_reason": null,
-  "wall_minutes": 14.7
+  "wall_minutes": 14.7,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "random_procthor-10k-val_val_167_s0",
   "brain": "random",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": null,
   "no_target_reason": "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)",
-  "wall_minutes": 8.5
+  "wall_minutes": 8.5,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "random_procthor-10k-val_val_300_s0",
@@ -180,33 +224,45 @@
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": null,
   "no_target_reason": "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)",
-  "wall_minutes": 8.6
+  "wall_minutes": 8.6,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_300_s0",
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 11.0
+  "wall_minutes": 11.0,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_322_s0",
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 15.3
+  "wall_minutes": 15.3,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_330_s0",
@@ -224,131 +280,187 @@
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 12.8
+  "wall_minutes": 12.8,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_489_s0",
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "chair",
   "no_target_reason": null,
-  "wall_minutes": 10.7
+  "wall_minutes": 10.7,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_752_s0",
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "television",
   "no_target_reason": null,
-  "wall_minutes": 10.8
+  "wall_minutes": 10.8,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "rules_procthor-10k-val_val_893_s0",
   "brain": "rules",
   "brain_model": null,
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "laptop",
   "no_target_reason": null,
-  "wall_minutes": 10.3
+  "wall_minutes": 10.3,
+  "reconstructed": [
+   "scout_commit"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_167_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": null,
   "no_target_reason": "no eligible movable object (seen 3+ times, matched to a real instance, no same-category instance within 2.5 m, >= 4 m away, not in view)",
-  "wall_minutes": 8.8
+  "wall_minutes": 8.8,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_300_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "sofa",
   "no_target_reason": null,
-  "wall_minutes": 17.6
+  "wall_minutes": 17.6,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_322_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "laptop",
   "no_target_reason": null,
-  "wall_minutes": 16.4
+  "wall_minutes": 16.4,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_330_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 16.7
+  "wall_minutes": 16.7,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_359_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "chair",
   "no_target_reason": null,
-  "wall_minutes": 17.8
+  "wall_minutes": 17.8,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_489_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "laptop",
   "no_target_reason": null,
-  "wall_minutes": 15.6
+  "wall_minutes": 15.6,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_752_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "sofa",
   "no_target_reason": null,
-  "wall_minutes": 13.3
+  "wall_minutes": 13.3,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  },
  {
   "episode": "terra_procthor-10k-val_val_893_s0",
   "brain": "terra (Muse Spark stand-in)",
-  "brain_model": null,
+  "brain_model": "us.openai.gpt-6.1-terra",
   "host": "modal",
-  "scout_commit": "",
+  "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
   "sam3_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
   "target": "dresser",
   "no_target_reason": null,
-  "wall_minutes": 14.9
+  "wall_minutes": 14.9,
+  "reconstructed": [
+   "scout_commit",
+   "brain_model"
+  ],
+  "reconstruction_note": "Filled after the run, not written by the episode. scout_commit: the frozen-plan commit the Modal compare job was launched from. brain_model: the Bedrock model id that brain name maps to in src/scout/brains.py at that commit."
  }
 ]

@@ -1,13 +1,15 @@
 # Setup from scratch
 
-Everything heavy runs on [Modal](https://modal.com) GPUs. Scoring and the CPU tests run anywhere.
+Episodes need a GPU: either [Modal](https://modal.com) (sections 3-4) or any Linux GPU machine (section 4b). Scoring
+and the CPU tests run anywhere.
 
 ## 1. Local tools
 
 ```bash
 git clone https://github.com/tayyab415/scout && cd scout
 uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
-.venv/bin/python -m pytest -q tests        # CPU only: map, memory, scorers, recording and review contracts
+source .venv/bin/activate                  # or prefix commands with .venv/bin/ (python, modal)
+python -m pytest -q tests        # CPU only: map, memory, scorers, recording and review contracts
 modal token new                            # Modal account
 export SCOUT_VOLUME=scout-data             # any Modal volume name; created on first use
 ```
@@ -43,6 +45,33 @@ modal run scripts/modal_env.py::videos --tag mytag               # synchronised 
 modal run scripts/modal_env.py::replay                           # branch replay determinism check
 ```
 
+## 4b. Run on your own GPU machine, without Modal
+
+The final evaluation's last 8 episodes ran this way on an AWS g5.2xlarge (A10G, 24 GB, Deep Learning AMI).
+
+```bash
+sudo apt-get install -y ffmpeg libegl1 libgl1
+uv venv /opt/venv --python 3.12 && source /opt/venv/bin/activate
+uv pip install torch==2.10.0 torchvision --index-url https://download.pytorch.org/whl/cu128
+git clone https://github.com/facebookresearch/sam3.git /opt/sam3 && uv pip install -e /opt/sam3
+uv pip install "imageio[ffmpeg]" pillow einops decord pycocotools psutil scipy pandas opencv-python-headless \
+    mujoco==3.17.0 h5py boto3 "metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git"
+uv pip install -e .
+export MUJOCO_GL=egl SAM3_DIR=/opt/sam3 HF_TOKEN_PATH=~/.cache/huggingface/token
+```
+
+Put the data under `/data` (or pass `--data-root`): `house/{scenes,objects,layouts}` from section 3 (copy them off
+the Modal volume with `modal volume get`) and `scout/z_motion.pt` from `assets/skills/`.
+
+```bash
+python scripts/run_local.py --house procthor-10k-val_val_935 --brain rules --tag dev            # one episode
+python scripts/run_local.py --plan configs/frozen_final3.json --tag final3 --parallel 2         # every missing episode of a plan
+python scripts/run_local.py --brain-module mybrain.py --brain mybrain --house procthor-10k-val_val_752 --tag mine
+```
+
+Each episode runs in a fresh process; outputs land in `/data/scout/env/<tag>/<episode>/` and every attempt, crashes
+included, is appended to `run_local.jsonl`. Two episodes in parallel fit in 24 GB.
+
 ## 5. Score a recorded episode without a GPU
 
 `examples/sample_episode/` is one real episode from the final evaluation (`final3`, Terra, house val_752): logs,
@@ -50,12 +79,7 @@ memory, evaluator records, maps, the head frames the evidence cards cite, and th
 is correct in both worlds; the memory-persistence rule is wrong in the moved one.
 
 ```bash
-.venv/bin/python -c "
-import sys; sys.path.insert(0, 'src')
-from scout.env.scoring import score_episode
-from scout.world.layout import Layout
-import json, glob
-d = 'examples/sample_episode'
-lay = Layout.load(glob.glob(d + '/layout_*.npz')[0])
-print(json.dumps(score_episode(d, lay), indent=1, default=float)[:3000])"
+python scripts/score_episode.py examples/sample_episode
 ```
+
+To rescore all 32 final3 episodes from the public records, see `docs/evidence.md` (`scripts/rescore_records.py`).

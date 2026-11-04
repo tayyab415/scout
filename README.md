@@ -63,7 +63,7 @@ Full setup from scratch is in `docs/setup.md`: accounts, the house download, ski
 
 ```bash
 uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
-.venv/bin/python -m pytest -q tests                      # CPU only, includes three rounds of independent review tests
+.venv/bin/python -m pytest -q tests                      # CPU only: 74 tests, including six rounds of independent review
 # score a real recorded episode without a GPU: see docs/setup.md section 5 (examples/sample_episode)
 modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain rules     # one episode, both arms (GPU)
 modal run scripts/modal_env.py::compare --houses-file final2_houses.json --tag mytag      # frozen brain comparison
@@ -77,8 +77,13 @@ MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is 
 
 ## Results (final evaluation: 8 never-seen homes × 4 brains, 32 of 32 episodes)
 
-- **The physical check never gave a wrong verdict** in 64 arms. When unsure it abstains, and abstentions are reported.
-- **Answering from memory was never right when the object had moved** (0 for every brain).
+- **Six clean verification pairs out of 32 episodes.** In each, the robot walked back, looked, and answered
+  correctly in both worlds, while the memory-persistence rule was wrong in the moved one.
+- **All 64 verification arms, counted:** 16 correct, 10 abstained, 16 wrong target (mostly the random brain),
+  8 no answer in time, 14 not run (no eligible target). No arm checked the right object and gave the wrong
+  verdict.
+- **The memory-persistence rule was never right when the object had moved** (0 for every brain). The rule answers
+  from memory without looking and calls no model, so this shows the stale-memory trap, not a model's judgement.
 - **The memory quiz separates the brains.** It is graded only against what each robot's camera actually saw:
   - GPT-6.1 Terra (Muse Spark stand-in): 92/112 correct;
   - rules: 93/112;
@@ -87,4 +92,4 @@ MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is 
 - **The body stays up:** 35 falls, and it got itself back up all 35 times.
 
 Full leaderboard, every outcome category, provenance, retries and failures: `docs/results/environment_results.md`
-and `docs/results/final3/`.
+and `docs/results/final3/`. Public videos and the records of all 32 episodes: `docs/evidence.md`.

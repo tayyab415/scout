@@ -126,7 +126,7 @@ then runs the 16 text prompts. Test set: 20 real head-camera frames from final3 
 | --- | --- | --- |
 | Seconds per look | 5.23 | 1.67 (3.1x faster) |
 | Detections (score >= 0.5) | 28 | 33 |
-| Same detect / no-detect decision per category | | 98.4% |
+| Presence agreement (same detect / no-detect decision, over the 320 sampled frame-category cases) | | 98.4% |
 | Mask IoU when both detect | | 0.98 |
 
 **Caveat:** 4 weights of one neck level (`backbone.vision_backbone.convs.3.*`) have no counterpart in the
