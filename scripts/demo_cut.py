@@ -73,17 +73,17 @@ def main():
         split_frames = nb - FPS * 8  # branch_video appends an 8 s verdict card
     if a.branch:
         for i, f in enumerate(rb):   # hook: the last 10 s of the split, both worlds answering
-            if split_frames - FPS * 10 <= i < split_frames:
+            if split_frames - FPS * 8 <= i < split_frames:
                 w.append_data(f)
-        put(branch_card, 4)
+        put(branch_card, 3)
     else:
         put(mv_card, 10)
     tgt = man.get("target") or {}
     put(card(["Scout", "A physics-simulated home that tests whether a robot's memory is still true.",
               "Body: Meta Motivo, in physics. Eyes: SAM 3.1. Brain: plug in yours.",
               f"This episode: house {man['house']}, never seen before  |  brain: {man['brain']}"], [64, 32, 26, 20],
-             [(255, 210, 90), (235, 235, 235), (200, 200, 200), (150, 150, 150)]), 6)
-    speed = max(1, int(np.ceil(n_prefix / (FPS * 25))))  # about 25 s of exploration on screen
+             [(255, 210, 90), (235, 235, 235), (200, 200, 200), (150, 150, 150)]), 5)
+    speed = max(1, int(np.ceil(n_prefix / (FPS * 20))))  # about 20 s of exploration on screen
     for i, f in enumerate(ru):      # exploration (shared by both arms), sped up and labelled
         if i >= n_prefix:
             break
@@ -98,15 +98,15 @@ def main():
             if i >= split_frames:
                 break
             w.append_data(f)
-        put(branch_card, 8)
+        put(branch_card, 6)
     else:
         for i, f in enumerate(rm):  # the hidden move, the question, the walk back, the look: real time
             if i >= nm - card_len:
                 break
             if i >= n_prefix:
                 w.append_data(f)
-    put(mv_card, 9)
-    put(un_card, 9)
+    put(mv_card, 7)
+    put(un_card, 7)
     rows = [ln for ln in open(a.leaderboard).read().splitlines() if ln.startswith("| ") and "---" not in ln][:5]
     cols = [c.strip() for c in rows[0].strip("|").split("|")]
     keep = [i for i, c in enumerate(cols) if c.startswith(("brain", "episodes planned", "verify unchanged", "verify moved",
@@ -124,7 +124,7 @@ def main():
                         font=font(18 if r else 14))
     dr.text((40, 640), "verify columns: correct / abstain / wrong / other.  Full outcome breakdown and every failure: docs/results/",
             fill=(150, 150, 150), font=font(16))
-    put(np.asarray(im), 16)
+    put(np.asarray(im), 14)
     put(card(["Plug in your own brain",
               "from scout.brains import register_brain",
               "class MyBrain:  decide(memory, state)   resolve(memory, question)   phrase(...)   answer(memory, question)",
@@ -133,14 +133,14 @@ def main():
               "...or any Meta Model API chat model:  --brain llm:<model id>",
               "Score a recorded episode on a laptop:  python scripts/score_episode.py examples/sample_episode",
               "github.com/tayyab415/scout"], [34, 19, 19, 19, 17, 19, 19, 30],
-             [(255, 210, 90)] + [(200, 230, 255)] * 6 + [(255, 210, 90)]), 10)
+             [(255, 210, 90)] + [(200, 230, 255)] * 6 + [(255, 210, 90)]), 9)
     put(card(["Built during the hackathon (Oct 27 - Nov 4)",
               "The environment: head RGB-D camera, the robot's own depth map, SAM 3.1 placed in 3D, episodic memory",
               "The body controller on Meta Motivo: blended skills, turning to look, getting back up after falls",
               "The evaluator: object identities, per-frame visibility, hidden moves, branching one episode into two worlds",
               "Scoring, the plug-in brain interface, the synchronised videos, this demo",
               "Used as is: Meta Motivo M-1, SAM 3.1, ProcTHOR houses (MolmoSpaces), Muse Spark 1.3 and Llama 4 on Meta Model API"],
-             [34, 22, 22, 22, 22, 20], [(255, 210, 90)] + [(235, 235, 235)] * 4 + [(170, 170, 170)]), 9)
+             [34, 22, 22, 22, 22, 20], [(255, 210, 90)] + [(235, 235, 235)] * 4 + [(170, 170, 170)]), 8)
     put(card(["What is real and what is given",
               "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
               "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
@@ -148,7 +148,7 @@ def main():
               "The brain in these runs is Muse Spark 1.3 on Meta Model API. Any model plugs in.",
               "The memory-persistence answer is a rule: whatever memory says, without looking.",
               "Targets are objects with no look-alike within 2.5 m, so the question names one identifiable object."],
-             [34, 22, 22, 22, 22, 22, 22]), 11)
+             [34, 22, 22, 22, 22, 22, 22]), 9)
     w.close()
     print("wrote", a.out)
 
