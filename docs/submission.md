@@ -48,7 +48,13 @@ others depend on.
 | **Meta Motivo M-1** | The body: zero-shot whole-body humanoid control in cluttered houses. We blend its skill vectors into walking, turning to look and fall recovery: 35 falls, 35 recoveries. |
 | **SAM 3.1** (open weights) | The eyes: open-vocabulary masks on a moving head camera, lifted into 3D with depth and stored as citable memories, each tied to the frame it came from. |
 | **Llama 4 Maverick** | A brain under test: decides what to re-check, which memory a question refers to, and how to answer. |
+| **V-JEPA 2** | A world model for the robot's own eyes: frozen V-JEPA 2 encoder plus our 11.4M-parameter action-conditioned predictor (V-JEPA 2-AC recipe), trained on 104,730 head-camera frames. In 12 unseen houses, knowing the action predicts the next view better than an action-blind twin. |
 | **Muse Spark** (brain slot) | The interface is model-agnostic. In these runs the slot is filled by Muse Spark 1.3 on Meta Model API, as a stand-in. |
+
+**Research foundations.** Scout builds on Meta Motivo / FB-CPR (arXiv:2504.11054), SAM 3 (arXiv:2511.16719),
+V-JEPA 2 (arXiv:2506.09985) and the JEPA line (I-JEPA, V-JEPA, LeJEPA), and LeCun's *A Path Towards Autonomous
+Machine Intelligence*. It extends Meta's OpenEQA, which tests answering from episodic memory, to the case where the
+world has changed since the memory was formed. Full list: README, "Research foundations".
 
 ## What we built during the hackathon
 
@@ -60,6 +66,7 @@ others depend on.
 - **A neural network trained on Scout's own data:** 233 parameters, trained in seconds on a CPU, that learned on
   its own which of SAM 3.1's detections to trust. Dropped into the robot's head in eight never-seen homes, it took
   first place of five brains on the memory quiz: 106/112, ahead of a frontier LLM (92) and the rule brain (93).
+- **A V-JEPA 2 world model** for the Motivo body's head camera (`docs/results/vjepa_world_model.md`).
 - **Testing:** 81 tests, written over six rounds of independent adversarial review, with recorded runs.
 
 ## Results
