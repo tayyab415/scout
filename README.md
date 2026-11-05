@@ -2,6 +2,8 @@
 
 ### A physics-simulated home that tests whether a robot's memory is still true.
 
+![Scout: a Meta Motivo body and SAM 3.1 eyes explore a house, the episode splits into two worlds, and only looking tells them apart](assets/media/scout_diagram.png)
+
 ![Same robot, same memory, same question: two worlds](assets/media/branch.gif)
 
 A Meta Motivo humanoid explores a house it has never seen. It sees through a head camera with SAM 3.1 and keeps a
