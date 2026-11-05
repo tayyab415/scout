@@ -47,6 +47,7 @@ models and trainable: the data it produces already trains better brains.
 | Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo | walks, falls, gets back up |
 | Eyes | SAM 3.1 (open weights, `facebook/sam3.1`) | open-vocabulary object masks on the head camera |
 | Brain under test | Llama 4 Maverick, GPT-6.1 Terra (stand-in for Muse Spark), rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
+| World model | V-JEPA 2 (frozen ViT-L encoder) | our action-conditioned predictor of the body's next head-camera view |
 | Worlds | ProcTHOR-10K houses from MolmoSpaces (CC BY 4.0), 800 train / 200 test | unseen homes |
 
 ## Built during the hackathon (Oct 27 - Nov 4, 2026)
@@ -59,6 +60,8 @@ The models and houses above were not built here. Everything else was.
 - The brain interface.
 - The evaluator: stable object ids, per-frame visibility, hidden interventions.
 - The branched moved / unchanged episodes, the scorers, and the synchronised video renderer.
+- A V-JEPA 2 world model for the body's own eyes: an 11.4M-parameter action-conditioned predictor trained on
+  104,730 head-camera frames, following the V-JEPA 2-AC recipe (`docs/results/vjepa_world_model.md`).
 - The student: a 233-parameter neural network trained in seconds, on CPU, from the episodes the environment exports
   (`src/scout/student/`, added 4 November).
 
@@ -89,6 +92,33 @@ modal run scripts/modal_env.py::compare --houses-file final2_houses.json --tag m
 modal run scripts/modal_env.py::score --tag mytag                                        # leaderboard
 modal run scripts/modal_env.py::videos --tag mytag                                       # synchronised videos
 ```
+
+## A V-JEPA 2 world model for the robot's own eyes
+
+Scout's memory asks *what is where*. A world model asks *what will I see if I move*. We trained one on the robot's
+own experience: a frozen V-JEPA 2 encoder with a new 11.4M-parameter action-conditioned predictor, following Meta's
+V-JEPA 2-AC recipe, on 104,730 head-camera frames from 2,592 Motivo episodes in 48 houses. On 12 houses it never
+saw, knowing the action makes its prediction of the next view more accurate than an identical action-blind twin
+(L1 0.296 against 0.321 one step ahead) and it identifies which of six skills the body ran 53% of the time (chance
+17%). Full results: `docs/results/vjepa_world_model.md`.
+
+## Research foundations
+
+Scout builds directly on Meta research, and on the broader embodied-AI literature it answers to.
+
+| Work | How Scout uses it |
+| --- | --- |
+| Tirinzoni et al., *Zero-Shot Whole-Body Humanoid Control via Behavioral Foundation Models* (Meta Motivo, FB-CPR), 2025. [arXiv:2504.11054](https://arxiv.org/abs/2504.11054) | The body. We blend its skill vectors into walking, turning to look and fall recovery. |
+| Carion et al., *SAM 3: Segment Anything with Concepts*, 2025. [arXiv:2511.16719](https://arxiv.org/abs/2511.16719) | The eyes (SAM 3.1 weights): open-vocabulary masks lifted into 3D memory. |
+| Assran et al., *V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction and Planning*, 2025. [arXiv:2506.09985](https://arxiv.org/abs/2506.09985) | The encoder and the action-conditioned recipe behind our world model. |
+| Bardes et al., *Revisiting Feature Prediction for Learning Visual Representations from Video* (V-JEPA), 2024. [arXiv:2404.08471](https://arxiv.org/abs/2404.08471) | The video JEPA line our world model descends from. |
+| Assran et al., *Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture* (I-JEPA), 2023. [arXiv:2301.08243](https://arxiv.org/abs/2301.08243) | Predicting in representation space, not pixels: the idea our predictor follows. |
+| LeCun, *A Path Towards Autonomous Machine Intelligence*, 2022. [OpenReview](https://openreview.net/forum?id=BZ5a1r-kVsf) | The case for agents with a world model and memory. Scout tests what happens when that memory goes stale. |
+| Balestriero and LeCun, *LeJEPA*, 2025. [arXiv:2511.08544](https://arxiv.org/abs/2511.08544) | Current JEPA training theory; context for the world-model work. |
+| Majumdar et al., *OpenEQA: Embodied Question Answering in the Era of Foundation Models*, CVPR 2024. [Project](https://open-eqa.github.io/) | Meta's benchmark for answering questions from episodic memory. Scout adds the missing case: the world changed after the memory was formed. |
+| Puig et al., *Habitat 3.0: A Co-Habitat for Humans, Avatars and Robots*, 2023. [arXiv:2310.13724](https://arxiv.org/abs/2310.13724) | Meta's embodied simulation platform; Scout brings full-body humanoid physics to the home-memory setting. |
+| Meta, *The Llama 4 herd*, 2025. [Blog](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) | Llama 4 Maverick, one of the brains under test. |
+| Deitke et al., *ProcTHOR: Large-Scale Embodied AI Using Procedural Generation*, 2022. [arXiv:2206.06994](https://arxiv.org/abs/2206.06994) | The houses (via Ai2 MolmoSpaces). |
 
 ## License
 
