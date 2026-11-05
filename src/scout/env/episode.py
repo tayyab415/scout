@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 
 
-def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev", explore_s: float = 240.0,
+def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev", explore_s: float = 240.0,
                 ask_after_s: float = 20.0, answer_timeout_s: float = 90.0, quiz: bool = True, mind: bool = True,
                 data_root: str = "/data", sam3_dir: str = "/sam3", commit=None):
     """One Scout episode (see the module docstring). `commit` is called after the outputs are written."""

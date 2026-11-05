@@ -5,11 +5,11 @@
 ```python
 from scout.env.core import ScoutEnv, PROMPTS
 from scout.env.agent import Agent
-from scout.brains import make_brain            # "terra", "llama4", "rules", "random", "student", or "llm:<bedrock model id>"
+from scout.brains import make_brain            # "spark", "llama4", "rules", "random", "student", or "llm:<Model API model id>"
 
 env = ScoutEnv("procthor-10k-val_val_935", seed=0, eyes=Sam31())   # GPU: Motivo body, MuJoCo house, SAM 3.1
 env.reset()                                     # random free start from the seed
-agent = Agent(make_brain("terra"))
+agent = Agent(make_brain("spark"))
 while env.t < 240:
     agent.tick(env)                             # one 1/30 s step: perceive (every 0.5 s), decide, steer, env.step(z)
 snap, saved = env.snapshot(), copy.deepcopy(agent)   # branch point
@@ -122,7 +122,7 @@ SAM and no language model. Result on 3 Nov:
 ### Measured: SAM 3.1 weights in image mode (`scripts/sam_speed_test.py`, 4 Nov, A10G)
 
 The SAM 3.1 checkpoint's detector weights were loaded into SAM 3's image model, which encodes each frame once and
-then runs the 16 text prompts. Test set: 20 real head-camera frames from final3 (Terra, val_752).
+then runs the 16 text prompts. Test set: 20 real head-camera frames from final3 (Muse Spark, val_752).
 
 | | Current pipeline (one video session per category) | Image mode |
 | --- | --- | --- |

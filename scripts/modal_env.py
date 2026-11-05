@@ -1,7 +1,7 @@
 """Run Scout environment episodes: explore, then a frozen moved / unchanged verification pair branched from one state.
 
-    modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain terra
-    modal run scripts/modal_env.py::compare --houses-file leaderboard_houses.json --brains terra,llama4,rules,random
+    modal run scripts/modal_env.py::episode --house procthor-10k-val_val_935 --brain spark
+    modal run scripts/modal_env.py::compare --houses-file leaderboard_houses.json --brains spark,llama4,rules,random
 
 One episode:
   1. reset in a held-out house; the agent explores on its own for `explore_s` seconds (brain decides re-checks).
@@ -26,7 +26,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch==2.10.0", "torchvision", index_url="https://download.pytorch.org/whl/cu128")
          .run_commands("git clone https://github.com/facebookresearch/sam3.git /sam3 && pip install -e /sam3")
          .pip_install("imageio[ffmpeg]", "pillow", "einops", "decord", "pycocotools", "psutil", "scipy", "pandas",
-                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "boto3")
+                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "requests")
          .pip_install("metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git")
          .env({"HF_HOME": "/data/hf", "MUJOCO_GL": "egl"})
          .add_local_dir(SRC, "/pkg")
@@ -34,26 +34,24 @@ image = (modal.Image.debian_slim(python_version="3.12")
 _tok = os.path.expanduser("~/.cache/huggingface/token")
 
 
-def _aws_env() -> dict:
+def _model_env() -> dict:
+    """Meta Model API key for the brains, passed as an ephemeral Modal secret (never written to disk)."""
     if not modal.is_local():
-        return {"AWS_DEFAULT_REGION": "us-east-1"}
-    import configparser
-    cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser("~/.aws/credentials"))
-    d = cp["default"] if "default" in cp else {}
-    env = {"AWS_ACCESS_KEY_ID": d.get("aws_access_key_id", ""), "AWS_SECRET_ACCESS_KEY": d.get("aws_secret_access_key", ""),
-           "AWS_DEFAULT_REGION": "us-east-1"}
-    if d.get("aws_session_token"):
-        env["AWS_SESSION_TOKEN"] = d["aws_session_token"]
-    return env
+        return {}
+    key = os.environ.get("MODEL_API_KEY", "")
+    if not key:
+        p = os.path.expanduser(os.environ.get("MODEL_API_KEY_FILE", "~/.config/meta/model_api_key"))
+        if os.path.exists(p):
+            key = open(p).read().strip()
+    return {"MODEL_API_KEY": key, "LLAMA_API_KEY": os.environ.get("LLAMA_API_KEY", "")}
 
 
 secrets = [modal.Secret.from_dict({"HF_TOKEN": open(_tok).read().strip() if modal.is_local() and os.path.exists(_tok) else ""}),
-           modal.Secret.from_dict(_aws_env())]
+           modal.Secret.from_dict(_model_env())]
 
 
 @app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=7200, secrets=secrets)
-def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev", explore_s: float = 240.0,
+def run_episode(house: str, brain: str = "spark", seed: int = 0, tag: str = "dev", explore_s: float = 240.0,
                 ask_after_s: float = 20.0, answer_timeout_s: float = 90.0, quiz: bool = True, mind: bool = True):
     import sys
     sys.path.insert(0, "/pkg")
@@ -62,14 +60,14 @@ def run_episode(house: str, brain: str = "terra", seed: int = 0, tag: str = "dev
 
 
 @app.local_entrypoint()
-def episode(house: str = "procthor-10k-val_val_935", brain: str = "terra", seed: int = 0, tag: str = "dev",
+def episode(house: str = "procthor-10k-val_val_935", brain: str = "spark", seed: int = 0, tag: str = "dev",
             explore_s: float = 240.0):
     import json
     print(json.dumps(run_episode.remote(house, brain, seed, tag, explore_s), indent=1))
 
 
 @app.local_entrypoint()
-def compare(houses_file: str = "leaderboard_houses.json", brains: str = "terra,llama4,rules,random", tag: str = "cmp",
+def compare(houses_file: str = "leaderboard_houses.json", brains: str = "spark,llama4,rules,random", tag: str = "cmp",
             explore_s: float = 240.0):
     """Frozen comparison: every brain, same houses, same seeds, same budgets. Every episode is kept, including errors."""
     import json

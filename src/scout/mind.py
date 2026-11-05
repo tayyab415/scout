@@ -1,5 +1,5 @@
 """The mind: a language model reads the body's memory and decides whether to keep exploring or go back and check
-something. Muse Spark is the intended model; GPT-6.1 Terra on Bedrock stands in until the Meta Model API key arrives.
+something. It runs on Meta Model API (`muse-spark-1.3` by default; `SCOUT_MIND_MODEL` swaps the model).
 
 It never sees simulator truth: only the memory table (what SAM 3.1 recognised, where and when), misses, and how much
 of the house is still unexplored.
@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
 
-MODEL = os.environ.get("SCOUT_MIND_MODEL", "us.openai.gpt-6.1-terra")
+from . import modelapi
+
+MODEL = os.environ.get("SCOUT_MIND_MODEL", modelapi.DEFAULT_MODEL)
 SYSTEM = """You are the mind of a humanoid body exploring a house it has never seen. Nobody gives you tasks.
 Your own standing goal: learn the house and keep an accurate memory of what is where.
 
@@ -33,26 +34,24 @@ something was not where you remembered it.
 Reply with JSON only: {"do": ..., "object_id": ..., "why": "one short sentence in the first person"}"""
 
 
-def ask_mind(table: str, state: str, region: str = "us-east-1", retries: int = 2) -> tuple[dict, float]:
-    import boto3
-    c = boto3.client("bedrock-runtime", region_name=region)
+def _reply(system: str, msg: str, model: str | None = None, retries: int = 2) -> str:
+    text, _ = modelapi.chat(system, msg, model=model or MODEL, max_tokens=3000, retries=retries)
+    return text
+
+
+def ask_mind(table: str, state: str, model: str | None = None, retries: int = 2) -> tuple[dict, float]:
+    import time
     msg = f"Memory:\n{table}\n\nNow:\n{state}"
     t0 = time.time()
-    for k in range(retries + 1):
-        try:
-            r = c.converse(modelId=MODEL, system=[{"text": SYSTEM}], messages=[{"role": "user", "content": [{"text": msg}]}],
-                           inferenceConfig={"maxTokens": 3000})
-            text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
-            m = re.search(r"\{.*\}", text, re.S)
-            d = json.loads(m.group(0)) if m else {"do": "explore", "why": "(unparsed reply)"}
-            if d.get("do") not in ("explore", "check"):
-                d = {"do": "explore", "why": "(invalid action)"}
-            return d, time.time() - t0
-        except Exception as e:  # network or throttling: keep the body moving
-            if k == retries:
-                return {"do": "explore", "why": f"(mind unavailable: {type(e).__name__})"}, time.time() - t0
-            time.sleep(2)
-    return {"do": "explore"}, time.time() - t0
+    try:
+        text = _reply(SYSTEM, msg, model=model, retries=retries)
+        m = re.search(r"\{.*\}", text, re.S)
+        d = json.loads(m.group(0)) if m else {"do": "explore", "why": "(unparsed reply)"}
+        if d.get("do") not in ("explore", "check"):
+            d = {"do": "explore", "why": "(invalid action)"}
+    except Exception as e:  # network or throttling: keep the body moving
+        d = {"do": "explore", "why": f"(mind unavailable: {type(e).__name__})"}
+    return d, time.time() - t0
 
 
 QUESTION_SYSTEM = """You are the memory of a humanoid body that has explored a house on its own. Someone now asks you
@@ -75,17 +74,14 @@ first-person sentences. Separate what you knew before from what you see now. Be 
 Reply with JSON only: {"say": "..."}"""
 
 
-def _converse(system: str, msg: str, region: str = "us-east-1") -> dict:
-    import boto3
-    c = boto3.client("bedrock-runtime", region_name=region)
+def _converse(system: str, msg: str, model: str | None = None) -> dict:
     for k in range(3):
         try:
-            r = c.converse(modelId=MODEL, system=[{"text": system}], messages=[{"role": "user", "content": [{"text": msg}]}],
-                           inferenceConfig={"maxTokens": 3000})
-            text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
+            text = _reply(system, msg, model=model, retries=0)
             m = re.search(r"\{.*\}", text, re.S)
             return json.loads(m.group(0)) if m else {"say": text}
         except Exception:
+            import time
             time.sleep(2)
     return {}
 

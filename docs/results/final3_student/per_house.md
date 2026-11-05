@@ -1,4 +1,4 @@
-| house | llama4 | random | rules | terra | student |
+| house | llama4 | random | rules | spark | student |
 |---|---|---|---|---|---|
 | val_167 | - / -; quiz no quiz | - / -; quiz no quiz | - / -; quiz no quiz | - / -; quiz no quiz | - / -; quiz no quiz |
 | val_300 | ok / ok (pair); quiz 9/16 | wtgt / wtgt; quiz 0/16 | ok / ok (pair); quiz 14/16 | none / ok; quiz 16/16 | ok / -; quiz 15/16 |

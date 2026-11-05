@@ -130,7 +130,7 @@ def main():
               "class MyBrain:  decide(memory, state)   resolve(memory, question)   phrase(...)   answer(memory, question)",
               "register_brain('mybrain', MyBrain)",
               "python scripts/run_local.py --brain-module mybrain.py --brain mybrain --house procthor-10k-val_val_752 --tag mine",
-              "...or any Bedrock chat model:  --brain llm:<model id>",
+              "...or any Model API model:  --brain llm:<model id>",
               "Score a recorded episode on a laptop:  python scripts/score_episode.py examples/sample_episode",
               "github.com/tayyab415/scout"], [34, 19, 19, 19, 17, 19, 19, 30],
              [(255, 210, 90)] + [(200, 230, 255)] * 6 + [(255, 210, 90)]), 9)
@@ -139,13 +139,13 @@ def main():
               "The body controller on Meta Motivo: blended skills, turning to look, getting back up after falls",
               "The evaluator: object identities, per-frame visibility, hidden moves, branching one episode into two worlds",
               "Scoring, the plug-in brain interface, the synchronised videos, this demo",
-              "Used as is: Meta Motivo M-1, SAM 3.1, ProcTHOR houses (MolmoSpaces), GPT-6.1 Terra and Llama 4 on Bedrock"],
+              "Used as is: Meta Motivo M-1, SAM 3.1, ProcTHOR houses (MolmoSpaces), Muse Spark 1.3 on Meta Model API, Llama 4 Maverick"],
              [34, 22, 22, 22, 22, 20], [(255, 210, 90)] + [(235, 235, 235)] * 4 + [(170, 170, 170)]), 8)
     put(card(["What is real and what is given",
               "Exploration uses a fixed nearest-frontier rule for every brain. Brains decide re-checks and answer.",
               "Depth and the body's pose come from the simulator (perfect odometry). Object recognition is SAM 3.1 on the head camera.",
               "'Not found' means the depth camera now sees past the remembered spot. It never claims to have seen the move.",
-              "The brain in these runs is GPT-6.1 Terra on AWS Bedrock, standing in for Muse Spark. Any model plugs in.",
+              "The brain in these runs is Muse Spark 1.3 on Meta Model API. Any model plugs in.",
               "The memory-persistence answer is a rule: whatever memory says, without looking.",
               "Targets are objects with no look-alike within 2.5 m, so the question names one identifiable object."],
              [34, 22, 22, 22, 22, 22, 22]), 9)

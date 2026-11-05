@@ -34,11 +34,11 @@ def make_policy(name: str, seed: int, log_path: str | None):
     if name == "random":
         return RandomFrontier(seed)
     if name.startswith("teacher"):
-        from scout.teacher.llm import BedrockChat, OpenAICompatChat
+        from scout.teacher.llm import MetaModelChat, OpenAICompatChat
         from scout.teacher.policy import TeacherPolicy
-        backend = name.split(":", 1)[1] if ":" in name else "bedrock"
-        llm = OpenAICompatChat() if backend == "openai" else BedrockChat(model_id=backend if backend != "bedrock" else
-                                                                        "us.meta.llama4-maverick-17b-instruct-v1:0")
+        backend = name.split(":", 1)[1] if ":" in name else "meta"
+        llm = OpenAICompatChat() if backend == "openai" else MetaModelChat(
+            model_id=backend if backend != "meta" else "muse-spark-1.3")
         return TeacherPolicy(llm, log_path)
     raise ValueError(name)
 

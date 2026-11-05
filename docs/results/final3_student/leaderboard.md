@@ -11,7 +11,7 @@ Host: one AWS g5.xlarge (A10G, 24 GB), two episodes at a time, `scripts/run_loca
 | brain | episodes | target frozen | memory quiz (errors) | affirmative answers with valid evidence | verification arms correct (of 16) | clean pairs | wrong-target arms | own checks (correct / abstain / wrong) | falls / got up |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---:|
 | **student (233 parameters, live)** | 8 | 7 | **106/112** (0) | **68/80** | 5 | 1 | 2 | 26 / 25 / 3 | 1 / 1 |
-| terra (Muse Spark stand-in) | 8 | 7 | 92/112 (0) | 61/82 | 7 | 3 | 0 | 29 / 28 / 6 | 3 / 3 |
+| muse-spark-1.3 | 8 | 7 | 92/112 (0) | 61/82 | 7 | 3 | 0 | 29 / 28 / 6 | 3 / 3 |
 | rules | 8 | 7 | 93/112 (0) | 61/87 | 6 | 2 | 4 | 3 / 8 / 0 | 17 / 17 |
 | llama4 | 8 | 6 | 48/96 (16) | 54/64 | 3 | 1 | 2 | 19 / 18 / 1 | 15 / 15 |
 | random | 8 | 6 | 16/96 (0) | 2/64 | 0 | 0 | 16 | 8 / 12 / 1 | 0 / 0 |
@@ -30,12 +30,12 @@ Per house, all five brains: `per_house.md`.
 
 ## What it shows
 
-- **Memory quiz: best of the five brains.** 106 of 112, against 92 for Terra and 93 for rules, on the same houses.
+- **Memory quiz: best of the five brains.** 106 of 112, against 92 for Muse Spark and 93 for rules, on the same houses.
   Each brain answers from the memory its own exploration built, so the memories differ between brains.
 - **Unchanged world: 4 of 6 checked arms correct, none wrong.** Moved world: 1 correct. The moved-world weakness is
   mostly the body's check, shared by every brain: across all recorded runs, the failed moved-world checks on the
   right target had no usable view of the remembered spot (0 looks past it, 0 looks at something there).
-- **Verification pairs: 1** (val_752, the demo house; Terra also succeeds there). Terra has 3, rules 2. The student is
+- **Verification pairs: 1** (val_752, the demo house; Muse Spark also succeeds there). Muse Spark has 3, rules 2. The student is
   not better at the physical check.
 
 ## Failures

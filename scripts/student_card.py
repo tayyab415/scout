@@ -3,7 +3,7 @@
     python scripts/student_card.py --episode examples/sample_episode --quiz docs/results/student/quiz_final3.json \
         --out assets/media/student_card.png [--mp4 student_card.mp4]
 
-Left: rows of the sample episode's memory table (final3, Terra, house val_752) with the network's trust in each, and
+Left: rows of the sample episode's memory table (final3, Muse Spark, house val_752) with the network's trust in each, and
 whether the object was really there (the evaluator's record; the robot never sees it). Right: the quiz on all
 final-evaluation memories. Same 1280x720 style as scripts/demo_cut.py.
 """
@@ -66,7 +66,7 @@ def main():
 
     # left: trust on a real memory table
     x0, y0 = 40, 140
-    d.text((x0, y0), "Its trust in each remembered object (final3, Terra, house val_752)", fill=FG, font=font(18))
+    d.text((x0, y0), "Its trust in each remembered object (final3, Muse Spark, house val_752)", fill=FG, font=font(18))
     hdr = y0 + 34
     d.text((x0, hdr), "object", fill=DIM, font=font(15))
     d.text((x0 + 150, hdr), "seen", fill=DIM, font=font(15))
@@ -94,7 +94,7 @@ def main():
     d.text((x1, y1), "Live as the robot's brain, 8 never-seen homes", fill=FG, font=font(18))
     d.text((x1, y1 + 24), "memory quiz, same houses, seed and scorer", fill=DIM, font=font(15))
     live = json.load(open(a.live)) if a.live else {}
-    res = [("GPT-6.1 Terra (Muse Spark stand-in)", live.get("terra", 92)), ("rule brain", live.get("rules", 93)),
+    res = [("Muse Spark 1.3 (Meta Model API)", live.get("spark", 92)), ("rule brain", live.get("rules", 93)),
            ("student (233 parameters)", live.get("student", 106))]
     n = 112
     for k, (name, c) in enumerate(res):
@@ -108,7 +108,7 @@ def main():
     d.text((x1, y1 + 266), f"Offline, on the other brains' memories: {off[0]}/{off[2]}", fill=FG, font=font(17))
     d.text((x1, y1 + 290), f"(rule brain {off[1]}/{off[2]}).", fill=FG, font=font(17))
     d.text((x1, y1 + 330), "Not better at the physical check:", fill=FG, font=font(17))
-    d.text((x1, y1 + 354), "1 clean verification pair, Terra 3, rules 2.", fill=FG, font=font(17))
+    d.text((x1, y1 + 354), "1 clean verification pair, Muse Spark 3, rules 2.", fill=FG, font=font(17))
     d.text((x1, y1 + 394), "Run after the frozen evaluation; reported separately.", fill=DIM, font=font(14))
     d.text((40, 680), "Protocol, cross-validation and every caveat: docs/results/student.md    github.com/tayyab415/scout",
            fill=DIM, font=font(15))

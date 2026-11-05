@@ -52,7 +52,7 @@ original runs, by whichever brain ran them, so this measures answering only, not
 
 | answers by | questions | correct | affirmative answers with a valid citation |
 |---|---:|---:|---:|
-| the brains that ran the episodes (Terra, Llama 4, rules, random; recorded answers) | 416 | 249 | 178/297 |
+| the brains that ran the episodes (Muse Spark, Llama 4, rules, random; recorded answers) | 416 | 249 | 178/297 |
 | rule brain (as in the leaderboard) | 416 | 333 | 224/329 |
 | rule brain with whole-word category matching | 416 | 352 | 224/310 |
 | student, network ranks only, every remembered category answered yes | 416 | 355 | 228/310 |
@@ -63,7 +63,7 @@ By whose memories the student answered from:
 
 | memories built by | questions | the brain that ran it | rule brain | student |
 |---|---:|---:|---:|---:|
-| GPT-6.1 Terra (Muse Spark stand-in) | 112 | 92 | 84 | 96 |
+| Muse Spark 1.3 (Meta Model API) | 112 | 92 | 84 | 96 |
 | rules | 112 | 93 | 93 | 103 |
 | Llama 4 Maverick | 96 | 48 (16 invalid replies) | 81 | 88 |
 | random | 96 | 16 | 75 | 83 |
@@ -80,7 +80,7 @@ The student then ran as the brain in all 8 final-evaluation houses, same seed an
 | live, same 8 houses | memory quiz | affirmative answers with valid evidence | verification arms correct | clean pairs |
 |---|---:|---:|---:|---:|
 | **student** | **106/112** | **68/80** | 5/16 | 1 |
-| GPT-6.1 Terra (Muse Spark stand-in) | 92/112 | 61/82 | 7/16 | 3 |
+| Muse Spark 1.3 (Meta Model API) | 92/112 | 61/82 | 7/16 | 3 |
 | rules | 93/112 | 61/87 | 6/16 | 2 |
 | Llama 4 Maverick | 48/96 | 54/64 | 3/16 | 1 |
 | random | 16/96 | 2/64 | 0/16 | 0 |
@@ -104,7 +104,7 @@ One of its failures is its own: in val_489 it ignored the time named in the ques
 ## Card
 
 `assets/media/student_card.png` (`scripts/student_card.py`) shows the network's trust on the sample episode's memory
-(final3, Terra, val_752): its most and least trusted objects, against the evaluator's record. One of the shown rows
+(final3, Muse Spark, val_752): its most and least trusted objects, against the evaluator's record. One of the shown rows
 is a mistake: a real television seen once, trusted at 0.11.
 
 ## Reproduce

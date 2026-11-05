@@ -30,7 +30,7 @@ what it saw, goes back when unsure, and answers questions with footage from its 
 - **Run:** 60 s, no falls, 16 waypoints, 1 stuck event recovered by replanning.
 - **Memory:** 23 objects; 20 of them within 1.5 m of a real object of that category. The three that fail: house
   plant and laptop have no answer-key entry (the plant is visible in its frames), and one "toilet" is 7 m off.
-- **Questions** (GPT-6.1 Terra as stand-in for Muse Spark): each answer cites the right frames, and for an unseen
+- **Questions** (Muse Spark 1.3 on Meta Model API): each answer cites the right frames, and for an unseen
   bathtub it answered "I did not see a bathtub."
 
 ## Robustness batch 1 (before the bed and window fixes)
@@ -54,7 +54,7 @@ Causes found from the maps and video:
 - **It switched between two frontiers every 2 s.** Fix: it commits to a frontier until it gets there, or makes no
   progress for 6 s, in which case that spot is banned.
 
-## The mind (Terra as stand-in for Muse Spark): checks from memory
+## The mind (Muse Spark 1.3): checks from memory
 
 In run `mind180b` (val_935, 180 s), 8 checks were started by the mind. Scored against truth:
 

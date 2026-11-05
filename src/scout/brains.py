@@ -7,22 +7,35 @@ A brain answers three kinds of call:
   answer(table, question)     -> {"answer": ..., "cited_sightings": [...], "observed": bool}   memory QA
 
 Brains:
-  llm:<bedrock model id>   a language model (GPT-6.1 Terra stands in for Muse Spark; Llama 4 Maverick)
+  spark                    Muse Spark 1.3 on Meta Model API (`muse-spark-1.3`)
+  spark-1.1                Muse Spark 1.1, the smallest model in the API
+  spark-open               Muse Spark Open, self-hosted or through a hosted provider (SCOUT_LLM_BASE_URL)
+  llama4                   Llama 4 Maverick through Meta's Llama API
+  llm:<model id>           any Meta Model API model, e.g. `llm:muse-wonder-1.0`
   rules                    fixed rules, no language model
   random                   random choices (a floor for the leaderboard)
   student                  a 233-parameter trust network trained on Scout's own recorded episodes (src/scout/student/)
+
+Meta Model API models (https://dev.meta.ai/docs/models): muse-spark-1.3, muse-spark-1.2, muse-spark-1.1,
+muse-wonder-1.0. Muse Spark 1.3 is the default; Llama 4 Maverick is the cheap baseline and can be swapped for Muse
+Spark Open or muse-spark-1.1.
 """
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
 import time
 
 from . import mind as _mind
+from . import modelapi
 
-TERRA = "us.openai.gpt-6.1-terra"
-LLAMA4 = "us.meta.llama4-maverick-17b-instruct-v1:0"
+SPARK = "muse-spark-1.3"
+SPARK_SMALL = "muse-spark-1.1"
+LLAMA4 = "Llama-4-Maverick-17B-128E-Instruct-FP8"
+LLAMA_BASE_URL = "https://api.llama.com/compat/v1"
+NAMES = {SPARK: "muse-spark-1.3", SPARK_SMALL: "muse-spark-1.1", LLAMA4: "llama4-maverick"}
 
 QA_SYSTEM = """You are the memory of a humanoid body that explored a house it had never seen. You know ONLY the memory
 table (objects its head camera recognised, with times in seconds since it woke up, positions on its own map, and
@@ -43,17 +56,16 @@ def _rows(table: str):
 
 
 class LLMBrain:
-    def __init__(self, model: str):
-        self.model, self.name = model, {TERRA: "terra (Muse Spark stand-in)", LLAMA4: "llama4-maverick"}.get(model, model)
+    def __init__(self, model: str, base_url: str | None = None, key_name: str = "MODEL_API_KEY"):
+        self.model, self.base_url, self.key_name = model, base_url, key_name
+        self.name = NAMES.get(model, model)
 
     def _call(self, system, msg):
-        import boto3
-        c = boto3.client("bedrock-runtime", region_name="us-east-1")
+        err = "no reply"
         for k in range(3):
             try:
-                r = c.converse(modelId=self.model, system=[{"text": system}], messages=[{"role": "user", "content": [{"text": msg}]}],
-                               inferenceConfig={"maxTokens": 3000})
-                text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
+                text, _ = modelapi.chat(system, msg, model=self.model, max_tokens=3000, retries=0,
+                                        base_url=self.base_url, key_name=self.key_name)
                 m = re.search(r"\{.*\}", text, re.S)
                 if not m:
                     return {"_error": "no JSON in reply", "_raw": text[:500]}
@@ -147,7 +159,8 @@ _REGISTRY = {}
 
 def register_brain(name: str, factory) -> None:
     """Plug in your own brain: register_brain("mybrain", MyBrain) makes `--brains mybrain` work. A brain implements
-    decide, resolve, phrase and answer (see the module docstring); any Bedrock chat model also works as "llm:<model id>"."""
+    decide, resolve, phrase and answer (see the module docstring); any Meta Model API model also works as
+    "llm:<model id>"."""
     _REGISTRY[name] = factory
 
 
@@ -160,10 +173,16 @@ def make_brain(name: str):
         return b
     if name in _REGISTRY:
         return _REGISTRY[name]()
-    if name in ("terra", "spark"):
-        return LLMBrain(TERRA)
+    if name in ("spark", "muse", "muse-spark"):
+        return LLMBrain(SPARK)
+    if name in ("spark-1.1", "muse-spark-1.1"):
+        return LLMBrain(SPARK_SMALL)
+    if name == "spark-open":
+        return LLMBrain(os.environ.get("SCOUT_LLM_MODEL", "muse-spark-open"), base_url=os.environ.get("SCOUT_LLM_BASE_URL"),
+                        key_name="SCOUT_LLM_API_KEY")
     if name in ("llama4", "llama"):
-        return LLMBrain(LLAMA4)
+        return LLMBrain(LLAMA4, base_url=os.environ.get("LLAMA_API_BASE_URL", LLAMA_BASE_URL),
+                        key_name="LLAMA_API_KEY")
     if name.startswith("llm:"):
         return LLMBrain(name[4:])
     if name == "rules":

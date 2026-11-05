@@ -12,7 +12,7 @@ Every run below is kept, with its frozen plan in `configs/frozen_<tag>.json`. Sc
 
 ## Pilot 2: `final` (32 episodes, superseded as an evaluation)
 
-8 fresh houses × 4 brains (terra = GPT-6.1 Terra as a stand-in for Muse Spark, llama4 = Llama 4 Maverick, rules,
+8 fresh houses × 4 brains (spark = Muse Spark 1.3 on Meta Model API, llama4 = Llama 4 Maverick, rules,
 random). All 32 planned episodes completed.
 
 | brain | target frozen | verify unchanged (correct / abstain / wrong / other) | verify moved (correct / abstain / wrong / other) | memory-persistence rule, unchanged / moved correct | quiz accuracy (errors) | affirmative answers with valid evidence | falls / got up |
@@ -20,14 +20,14 @@ random). All 32 planned episodes completed.
 | llama4 | 6 | 2 / 4 / 0 / 2 | 1 / 4 / 0 / 3 | 5 / 0 | 0.61 (1) | 58/75 | 3 / 3 |
 | random | 7 | 1 / 0 / 0 / 7 | 0 / 1 / 1 / 6 | 1 / 0 | 0.16 (0) | 5/76 | 5 / 5 |
 | rules | 4 | 3 / 1 / 0 / 4 | 1 / 3 / 0 / 4 | 4 / 0 | 0.77 (0) | 37/56 | 5 / 5 |
-| terra | 5 | 1 / 4 / 0 / 3 | 0 / 5 / 0 / 3 | 5 / 0 | 0.81 (0) | 45/60 | 6 / 5 |
+| spark | 5 | 1 / 4 / 0 / 3 | 0 / 5 / 0 / 3 | 5 / 0 | 0.81 (0) | 45/60 | 6 / 5 |
 
 What it showed:
 
 - **The memory-persistence rule was never right when the object had moved** (0 in every brain's row). In the
   unchanged arm it was right whenever the brain picked the right object. This is the stale-memory failure the
   environment is built to expose.
-- **The memory quiz separates the brains.** Ranked against what each agent's camera actually showed: terra 0.81,
+- **The memory quiz separates the brains.** Ranked against what each agent's camera actually showed: spark 0.81,
   rules 0.77, llama4 0.61, random 0.16.
 - **The physical check almost never gave a wrong verdict, but it abstained most of the time.** The per-check
   evidence (`modal run scripts/modal_env.py::evidence --tag final`) showed three causes:
@@ -56,7 +56,7 @@ evaluation. Its houses now count as development houses.
   - a hit needs a same-category detection within 0.6 m of the remembered spot, or a same-category box over the
     remembered pixel while depth shows something at the remembered distance;
   - the evaluator only freezes targets with no other instance of their category within 2.5 m.
-- **Reach.** Terra's questions often named an object seen through a doorway in an unmapped area: unreachable in
+- **Reach.** Muse Spark's questions often named an object seen through a doorway in an unmapped area: unreachable in
   4 of its 7 finished episodes. Fix: walk to the reachable cell nearest the object, then search for a viewpoint
   again.
 - **After the fixes (dev5, the same failure houses):**
@@ -69,14 +69,14 @@ evaluation. Its houses now count as development houses.
 ## Final evaluation: `final3` (8 never-seen houses × 4 brains, 32 of 32 planned episodes)
 
 Plan: `configs/frozen_final3.json`. The houses (`configs/final3_houses.json`) were picked after 52 houses had been
-used for development. The brain is GPT-6.1 Terra on AWS Bedrock, standing in for Muse Spark.
+used for development. The brain is Muse Spark 1.3 on Meta Model API.
 
 | brain | episodes planned | completed | target frozen | verify unchanged (correct / abstain / wrong / other) | verify moved (correct / abstain / wrong / other) | memory-persistence rule, unchanged / moved (correct) | quiz accuracy (errors) | affirmative answers with valid evidence | own checks (correct / abstain / wrong) | floor seen (median) | falls / got up |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | llama4 | 8 | 8 | 6 | 2 / 2 / 0 / 4 | 1 / 2 / 0 / 5 | 3 / 0 | 0.50 (16) | 54/64 | 19 / 18 / 1 | 96% | 15 / 15 |
 | random | 8 | 8 | 6 | 0 / 0 / 0 / 8 | 0 / 0 / 0 / 8 | 0 / 0 | 0.17 (0) | 2/64 | 8 / 12 / 1 | 83% | 0 / 0 |
 | rules | 8 | 8 | 7 | 4 / 1 / 0 / 3 | 2 / 2 / 0 / 4 | 5 / 0 | 0.83 (0) | 61/87 | 3 / 8 / 0 | 98% | 17 / 17 |
-| terra | 8 | 8 | 7 | 3 / 2 / 0 / 3 | 4 / 1 / 0 / 3 | 7 / 0 | 0.82 (0) | 61/82 | 29 / 28 / 6 | 93% | 3 / 3 |
+| spark | 8 | 8 | 7 | 3 / 2 / 0 / 3 | 4 / 1 / 0 / 3 | 7 / 0 | 0.82 (0) | 61/82 | 29 / 28 / 6 | 93% | 3 / 3 |
 
 Verification outcomes per arm (physical check; 'not run' = no target frozen, crashed, or moved arm skipped):
 
@@ -88,8 +88,8 @@ Verification outcomes per arm (physical check; 'not run' = no target frozen, cra
 | random | moved | 0 | 0 | 0 | 4 | 0 | 1 | 3 |
 | rules | unchanged | 4 | 1 | 0 | 2 | 0 | 0 | 1 |
 | rules | moved | 2 | 2 | 0 | 2 | 0 | 1 | 1 |
-| terra | unchanged | 3 | 2 | 0 | 0 | 0 | 2 | 1 |
-| terra | moved | 4 | 1 | 0 | 0 | 0 | 2 | 1 |
+| spark | unchanged | 3 | 2 | 0 | 0 | 0 | 2 | 1 |
+| spark | moved | 4 | 1 | 0 | 0 | 0 | 2 | 1 |
 
 Falls, recoveries and own checks are counted on the unchanged arm (it shares the exploration with the moved arm).
 
@@ -98,7 +98,7 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
 
 | brain | questions | correct | errors |
 | --- | --- | --- | --- |
-| terra | 112 | 92 | 0 |
+| spark | 112 | 92 | 0 |
 | rules | 112 | 93 | 0 |
 | llama4 | 96 | 48 | 16 (invalid replies, counted as wrong) |
 | random | 96 | 16 | 0 |
@@ -109,10 +109,10 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
   14 not run. The separate `wrong` category (right object, wrong verdict) is 0. These are prompted
   verification outcomes; the agent's own re-checks are scored separately in the leaderboard.
 - **The memory-persistence rule was never right in a moved arm** (0 for every brain). In the unchanged arms it was
-  right whenever the brain picked the right object: terra 7, rules 5, llama4 3.
+  right whenever the brain picked the right object: spark 7, rules 5, llama4 3.
 - **Clean verification pairs** (the check correct in both arms, the rule correct when unchanged and wrong when
-  moved): 6. They are terra on val_893 (dresser), val_752 (sofa) and val_330 (dresser); llama4 on val_300 (sofa);
-  rules on val_893 (laptop) and val_300 (dresser). The public sample and the demo use terra / val_752.
+  moved): 6. They are spark on val_893 (dresser), val_752 (sofa) and val_330 (dresser); llama4 on val_300 (sofa);
+  rules on val_893 (laptop) and val_300 (dresser). The public sample and the demo use spark / val_752.
 - **Failures kept:**
   - no target frozen (for example, val_167 stalls with no unexplored openings left and nothing eligible to move);
   - wrong target (the random brain picks a random object);
@@ -134,8 +134,8 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
     episode's GPU memory;
   - after the fix (one fresh process per episode), all 6 completed;
   - all attempts are in `aws_runs.jsonl`.
-- **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `us.openai.gpt-6.1-terra` and
-  `us.meta.llama4-maverick-17b-instruct-v1:0` on Bedrock (us-east-1).
+- **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `muse-spark-1.3` on Meta Model API and
+  Llama 4 Maverick through the Llama API.
 
 **Recordings and records:** public, no credentials needed, in the GitHub release
 [`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence): the demo cut, branch shot,

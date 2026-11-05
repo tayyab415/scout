@@ -1,8 +1,9 @@
-"""Chat model backends for the teacher. Same interface for Bedrock now and the Meta Model API later."""
+"""Chat model backends for the teacher. Meta Model API by default, any OpenAI-compatible endpoint on request."""
 from __future__ import annotations
 
 import os
-import time
+
+from ..modelapi import BASE_URL, DEFAULT_MODEL, chat
 
 
 class ChatModel:
@@ -13,41 +14,27 @@ class ChatModel:
         raise NotImplementedError
 
 
-class BedrockChat(ChatModel):
-    """AWS Bedrock Converse API. Default: Meta Llama 4 Maverick (cross-region profile)."""
+class MetaModelChat(ChatModel):
+    """Meta Model API (https://api.meta.ai/v1). Default: Muse Spark 1.3."""
 
-    def __init__(self, model_id: str = "us.meta.llama4-maverick-17b-instruct-v1:0", region: str = "us-east-1",
-                 temperature: float = 0.0):
-        import boto3
-        from botocore.config import Config
+    def __init__(self, model_id: str = DEFAULT_MODEL, temperature: float = 0.0):
         self.model_id, self.temperature = model_id, temperature
         self.name = model_id
-        self.client = boto3.client("bedrock-runtime", region_name=region,
-                                   config=Config(retries={"max_attempts": 8, "mode": "adaptive"}))
 
     def complete(self, system, user, max_tokens=200):
-        t = time.time()
-        r = self.client.converse(
-            modelId=self.model_id,
-            system=[{"text": system}],
-            messages=[{"role": "user", "content": [{"text": user}]}],
-            inferenceConfig={"maxTokens": max_tokens, "temperature": self.temperature},
-        )
-        text = r["output"]["message"]["content"][0]["text"]
-        u = r.get("usage", {})
-        return text, {"latency_s": time.time() - t, "in_tokens": u.get("inputTokens"), "out_tokens": u.get("outputTokens")}
+        return chat(system, user, model=self.model_id, max_tokens=max_tokens, temperature=self.temperature)
 
 
 class OpenAICompatChat(ChatModel):
-    """Any OpenAI-compatible chat endpoint, e.g. the Meta Model API once a key is available.
+    """Any OpenAI-compatible chat endpoint, e.g. Muse Spark Open behind SGLang or a hosted provider.
 
     Configure with SCOUT_LLM_BASE_URL, SCOUT_LLM_MODEL and SCOUT_LLM_API_KEY (or SCOUT_LLM_API_KEY_FILE).
     """
 
     def __init__(self, base_url: str | None = None, model: str | None = None, api_key: str | None = None,
                  temperature: float = 0.0):
-        self.base_url = (base_url or os.environ["SCOUT_LLM_BASE_URL"]).rstrip("/")
-        self.model = model or os.environ["SCOUT_LLM_MODEL"]
+        self.base_url = (base_url or os.environ.get("SCOUT_LLM_BASE_URL", BASE_URL)).rstrip("/")
+        self.model = model or os.environ.get("SCOUT_LLM_MODEL", DEFAULT_MODEL)
         key = api_key or os.environ.get("SCOUT_LLM_API_KEY")
         if not key and os.environ.get("SCOUT_LLM_API_KEY_FILE"):
             key = open(os.environ["SCOUT_LLM_API_KEY_FILE"]).read().strip()
@@ -55,6 +42,7 @@ class OpenAICompatChat(ChatModel):
 
     def complete(self, system, user, max_tokens=200):
         import requests
+        import time
         t = time.time()
         r = requests.post(f"{self.base_url}/chat/completions", timeout=120,
                           headers={"Authorization": f"Bearer {self.key}"},
@@ -63,5 +51,6 @@ class OpenAICompatChat(ChatModel):
         r.raise_for_status()
         j = r.json()
         u = j.get("usage", {})
-        return j["choices"][0]["message"]["content"], {"latency_s": time.time() - t,
-                                                       "in_tokens": u.get("prompt_tokens"), "out_tokens": u.get("completion_tokens")}
+        return j["choices"][0]["message"]["content"], {"latency_s": round(time.time() - t, 2),
+                                                       "in_tokens": u.get("prompt_tokens"),
+                                                       "out_tokens": u.get("completion_tokens")}

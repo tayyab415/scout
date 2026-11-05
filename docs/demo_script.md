@@ -2,7 +2,7 @@
 
 Opening line: **"Same robot. Same memory. Same question."**
 
-`scripts/demo_cut.py` assembles the video from one recorded episode (final3, Terra, house val_752) and its branch
+`scripts/demo_cut.py` assembles the video from one recorded episode (final3, Muse Spark, house val_752) and its branch
 shot (`scripts/branch_video.py`). The cut is **2:52.067** long, and exploration plays at **12x**. It is the released 2:43.067 silent cut with the
 student card (`scripts/student_card.py`, 9 s) inserted at 2:17.067, before the plug-in card. Every clip is a
 real recording. Every number comes from the final leaderboard (`final3`), except the student card's, which come from
@@ -27,13 +27,13 @@ throughout.
 | 2:17.067–2:26.067 | Student card | "Every episode is exported, so the environment trains brains too. We trained a 233-parameter network on earlier episodes from other houses. It learned which sightings to doubt. As the robot's brain in the eight unseen homes, it remembered best of all five brains. It is not better at the physical check." |
 | 2:26.067–2:35.067 | Plug-in interface | "Register your own brain, compare it on the same tasks, and score recorded episodes on a laptop." |
 | 2:35.067–2:43.067 | Hackathon contributions | "We built the controller, mapping, memory, interventions, scorers, interface and the student during the hackathon, using the existing models and houses." |
-| 2:43.067–2:52.067 | Disclosure | "Exploration follows a fixed rule. Depth and pose are ideal. Terra stands in for Muse Spark. Targets are isolated objects." |
+| 2:43.067–2:52.067 | Disclosure | "Exploration follows a fixed rule. Depth and pose are ideal. Muse Spark 1.3 runs on Meta Model API. Targets are isolated objects." |
 
 ## Who decides what (say it this way)
 
 - **The body's check decides "still there", "not found" or "unclear".** Fixed rules on SAM 3.1 detections and depth:
   "not found" needs the depth camera to see past the remembered spot.
-- **The brain** (GPT-6.1 Terra, standing in for Muse Spark) **decides** when to re-check during exploration and
+- **The brain** (Muse Spark 1.3 on Meta Model API) **decides** when to re-check during exploration and
   which remembered object a question is about. It also answers the memory quiz, citing frames.
 - **The memory-only answer is a rule, not the brain:** whatever memory says, without looking.
 - **Targets** are objects with no other object of the same kind within 2.5 m, so the question names one
@@ -41,7 +41,8 @@ throughout.
 
 ## What must stay true on screen
 
-- Never relabel Terra as Muse Spark.
+- Never call the brain a different model than the one that ran. If you swap in Muse Spark Open or `muse-spark-1.1`,
+  say so.
 - The student's quiz result is offline, on memories other brains built. Say "answers the memory quiz", not "explores better".
 - "Not found" never means "it detected the move".
 - Use the final leaderboard's numbers, including abstentions, wrong targets and episodes that did not run.

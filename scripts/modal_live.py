@@ -21,7 +21,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch==2.10.0", "torchvision", index_url="https://download.pytorch.org/whl/cu128")
          .run_commands("git clone https://github.com/facebookresearch/sam3.git /sam3 && pip install -e /sam3")
          .pip_install("imageio[ffmpeg]", "pillow", "einops", "decord", "pycocotools", "psutil", "scipy", "pandas",
-                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "boto3")
+                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "requests")
          .pip_install("metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git")
          .run_commands("python -c 'import torch; print(torch.__version__)'")
          .env({"HF_HOME": "/data/hf", "MUJOCO_GL": "egl"})
@@ -31,24 +31,19 @@ _tok = os.path.expanduser("~/.cache/huggingface/token")
 secrets = [modal.Secret.from_dict({"HF_TOKEN": open(_tok).read().strip() if modal.is_local() and os.path.exists(_tok) else ""})]
 
 
-def _aws_env() -> dict:
-    """Bedrock credentials for the mind, passed as an ephemeral Modal secret (never written to disk)."""
+def _model_env() -> dict:
+    """Meta Model API key for the mind and the brains, passed as an ephemeral Modal secret (never written to disk)."""
     if not modal.is_local():
-        return {"AWS_DEFAULT_REGION": "us-east-1"}
-    import configparser
-    cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser("~/.aws/credentials"))
-    if "default" not in cp:
-        return {"AWS_DEFAULT_REGION": "us-east-1"}
-    d = cp["default"]
-    env = {"AWS_ACCESS_KEY_ID": d.get("aws_access_key_id", ""), "AWS_SECRET_ACCESS_KEY": d.get("aws_secret_access_key", ""),
-           "AWS_DEFAULT_REGION": "us-east-1"}
-    if d.get("aws_session_token"):
-        env["AWS_SESSION_TOKEN"] = d["aws_session_token"]
-    return env
+        return {}
+    key = os.environ.get("MODEL_API_KEY", "")
+    if not key:
+        p = os.path.expanduser(os.environ.get("MODEL_API_KEY_FILE", "~/.config/meta/model_api_key"))
+        if os.path.exists(p):
+            key = open(p).read().strip()
+    return {"MODEL_API_KEY": key, "LLAMA_API_KEY": os.environ.get("LLAMA_API_KEY", "")}
 
 
-secrets.append(modal.Secret.from_dict(_aws_env()))
+secrets.append(modal.Secret.from_dict(_model_env()))
 # objects the evaluator may move during a run (disclosed test of stale memory): prompt -> THOR body-name prefixes
 MOVABLE = {"floor lamp": ["floorlamp"], "armchair": ["armchair"], "television": ["television"], "laptop": ["laptop"],
            "sofa": ["sofa"], "dresser": ["dresser", "chestofdrawers"], "chair": ["chair"]}
@@ -110,7 +105,7 @@ def move_object(mujoco, body, mem, lay, rng, t, in_view=(), only_label=""):
 @app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=5400, secrets=secrets)
 def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "", mind: bool = False,
              mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
-             question: str = "", find: bool = False, brain_name: str = "terra", quiz: bool = False):
+             question: str = "", find: bool = False, brain_name: str = "spark", quiz: bool = False):
     import io
     import json
     import math
@@ -557,13 +552,13 @@ def live_run(house: str, seconds: float = 60.0, seed: int = 0, run_name: str = "
 @app.local_entrypoint()
 def main(house: str = "procthor-10k-val_val_935", seconds: float = 60.0, seed: int = 0, run_name: str = "",
          mind: bool = False, mind_every: float = 20.0, move_at: float = -1.0, move_label: str = "", ask_at: float = -1.0,
-         question: str = "", find: bool = False, brain: str = "terra", quiz: bool = False):
+         question: str = "", find: bool = False, brain: str = "spark", quiz: bool = False):
     print(live_run.remote(house, seconds, seed, run_name, mind, mind_every, move_at, move_label, ask_at, question, find,
                           brain, quiz))
 
 
 @app.local_entrypoint()
-def leaderboard(houses_file: str = "leaderboard_houses.json", brains: str = "terra,llama4,rules,random",
+def leaderboard(houses_file: str = "leaderboard_houses.json", brains: str = "spark,llama4,rules,random",
                 tag: str = "lb", seconds: float = 420.0, ask_at: float = 300.0, move_at: float = 150.0):
     """Every brain on the same held-out houses, same seeds: explore, self-checks, a verify question with the asked-about
     object moved by the evaluator in odd-numbered houses and left alone in even ones, then a memory quiz."""
