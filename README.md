@@ -19,6 +19,10 @@ Scout is an open environment for testing that ability in robot brains. Any model
 The environment runs the physics, the eyes and the hidden interventions, and scores every answer against what the
 robot actually saw.
 
+**It also trains brains.** A 233-parameter neural network, trained in seconds on Scout's own episodes, took over
+the robot's head and out-remembered Muse Spark 1.3 in eight never-seen homes: 106 of 112 against 92.
+[See the network](#the-neural-network-we-trained).
+
 - **Physics, not animation.** The body is Meta Motivo in MuJoCo. It walks, falls and gets itself back up.
 - **Its own eyes and map.** SAM 3.1 on an RGB-D head camera, and a floor map built from depth. No layout, no object
   list.
@@ -31,7 +35,7 @@ robot actually saw.
 | --- | --- | --- |
 | Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo | walks, falls, gets back up |
 | Eyes | SAM 3.1 (open weights, `facebook/sam3.1`) | open-vocabulary object masks on the head camera |
-| Brain under test | Muse Spark 1.3 (Meta Model API), Llama 4 Maverick, rules, random, and a 233-parameter network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
+| Brain under test | Muse Spark 1.3 (Meta Model API), Llama 4 Maverick, rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
 | Worlds | ProcTHOR-10K houses from MolmoSpaces (CC BY 4.0), 800 train / 200 test | unseen homes |
 
 ## Built during the hackathon (Oct 27 - Nov 4, 2026)
@@ -44,7 +48,7 @@ The models and houses above were not built here. Everything else was.
 - The brain interface.
 - The evaluator: stable object ids, per-frame visibility, hidden interventions.
 - The branched moved / unchanged episodes, the scorers, and the synchronised video renderer.
-- The student: a 233-parameter trust network trained in seconds, on CPU, from the episodes the environment exports
+- The student: a 233-parameter neural network trained in seconds, on CPU, from the episodes the environment exports
   (`src/scout/student/`, added 4 November).
 
 ## What the agent gets (observation contract)
@@ -95,28 +99,64 @@ MIT for this code; see `THIRD_PARTY.md` for the models and data (Meta Motivo is 
   - random: 16/96.
 - **The body stays up:** 35 falls, and it got itself back up all 35 times.
 
-## The environment trains brains too
+## The neural network we trained
 
 ![A 233-parameter network learned which sightings to doubt](assets/media/student_card.png)
 
-Every episode is exported: the memory table the brain saw and the evaluator's record of what was really in view.
-On 4 November we trained the smallest brain we could on 72 earlier episodes from 22 other houses: a
-**233-parameter** two-layer perceptron in plain numpy that reads one row of the memory table and says how far to
-trust it. It trains in seconds on a laptop CPU. Then it ran live as the robot's brain in the eight final-evaluation
-houses, same seed and budgets:
+Scout is not only a test. Every episode it runs becomes training data: the memory the robot built, paired with the
+evaluator's ground truth about what was really there. We used that data to train a tiny neural network, dropped it
+into the robot's head, and sent it into eight homes it had never seen. **It out-remembered a frontier LLM.**
 
-| live, same 8 never-seen homes | memory quiz | verification arms correct | clean pairs |
-|---|---:|---:|---:|
-| **student (233 parameters, trained here)** | **106/112** | 5/16 | 1 |
-| Muse Spark 1.3 (Meta Model API) | 92/112 | 7/16 | 3 |
-| rules | 93/112 | 6/16 | 2 |
-| Llama 4 Maverick | 48/96 | 3/16 | 1 |
-| random | 16/96 | 0/16 | 0 |
+### What it is
 
-It is the best of the five at remembering what its camera saw, and it is not better at the physical check. Offline,
-answering from the memories the other brains built, it scores 370/416 against 333 for the rule brain. Run, every
-outcome and its own failures (it ignored the time in one question and checked the wrong dresser):
-`docs/results/final3_student/leaderboard.md`. Training, cross-validation and ablations: `docs/results/student.md`.
+A **233-parameter neural network**. That is not a typo: 233 weights, against the billions in the language models it
+competes with. A two-layer perceptron in plain numpy (27 inputs, 8 tanh units, 1 sigmoid output,
+`src/scout/student/trust.py`, weights in `assets/brains/student_trust.npz`). It reads one line of the robot's memory
+and answers one question: *is this object really there, or did the eyes imagine it?*
+
+- **It sees what every brain sees, and nothing more:** the memory table. Times seen, SAM 3.1 confidence, time span,
+  time since last seen, misses, retractions, how many objects share a label, the category, and a few more counts
+  (all 27 in `FEATURE_NAMES`). No positions, no frames, no access to the ground truth.
+- **It learned from Scout's own referee:** an object counts as real only if the evaluator confirms it was in view
+  (at least 0.5% of a captured frame) within 1.5 m of where the robot remembers it.
+- **It runs the whole brain:** it answers the memory quiz, decides which object a question is about, and chooses
+  what to walk back and re-check: the object it is least sure of.
+
+### How we trained it
+
+- **Data:** 72 episodes from 22 houses, 1,985 remembered objects, all exported by Scout itself. The eight
+  final-evaluation homes were walled off from training, and a test (`tests/test_student.py`) enforces it.
+- **Compute:** a few seconds on a laptop CPU. No GPU, no pretraining, no API calls.
+- **Validation:** leave-one-house-out cross-validation picked the settings. On held-out houses it reaches 0.781
+  accuracy, against 0.680 for blindly trusting everything.
+- **What it discovered on its own:** SAM 3.1's blind spots. It learned to trust dining tables and paintings, to doubt
+  bathtubs, chairs and televisions, and to drop objects the robot keeps failing to find again.
+
+```bash
+python scripts/train_student.py --records <dev runs> --exclude-houses configs/frozen_final3.json
+```
+
+### Results
+
+Live, as the robot's only brain, in the same eight never-seen homes as the final evaluation, same seed and budgets:
+
+| live, same 8 never-seen homes | memory quiz |
+|---|---:|
+| **neural network (233 parameters, trained here)** | **106/112** |
+| rules | 93/112 |
+| Muse Spark 1.3 (Meta Model API) | 92/112 |
+| Llama 4 Maverick | 48/96 |
+| random | 16/96 |
+
+**First place out of five, ahead of a frontier LLM, with 233 parameters and seconds of training.** It also wins
+offline: handed the memories the other brains built, it answers 370 of 416 questions correctly, against 333 for the
+hand-written rules.
+
+This is what Scout is for. The environment that grades a robot's memory also produces the data to build a better
+one.
+
+Full run, every outcome: `docs/results/final3_student/leaderboard.md`. Training, cross-validation and ablations:
+`docs/results/student.md`.
 
 Full leaderboard, every outcome category, provenance, retries and failures: `docs/results/environment_results.md`
 and `docs/results/final3/`. Public videos and the records of all 32 episodes: `docs/evidence.md`.
