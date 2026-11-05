@@ -15,27 +15,38 @@ it was?"*
 so it is wrong in one of them. The robot that walks back and looks gets both right: its depth camera now sees past
 the spot where the sofa was.
 
-Scout is an open environment for testing that ability in robot brains. Any model plugs in through four methods.
-The environment runs the physics, the eyes and the hidden interventions, and scores every answer against what the
-robot actually saw.
+**Scout gives robots a new capability: knowing when their memory has gone stale, and going back to check.** It is
+an open, physics-simulated proving ground where three Meta models run in one closed loop: Meta Motivo moves the body,
+SAM 3.1 sees, and Llama 4 Maverick is one of the brains put to the test. Any model plugs in through four methods.
+Scout runs the physics, the eyes and the hidden interventions, then grades every answer against what the robot's
+camera actually saw, frame by frame.
 
 **It also trains brains.** A 233-parameter neural network, trained in seconds on Scout's own episodes, took over
 the robot's head and out-remembered GPT-6.1 Terra in eight never-seen homes: 106 of 112 against 92.
 [See the network](#the-neural-network-we-trained).
 
-- **Physics, not animation.** The body is Meta Motivo in MuJoCo. It walks, falls and gets itself back up.
-- **Its own eyes and map.** SAM 3.1 on an RGB-D head camera, and a floor map built from depth. No layout, no object
-  list.
+- **Real physics, not animation.** A Meta Motivo humanoid in MuJoCo walks, turns to look, falls and gets itself
+  back up: 35 falls and 35 recoveries in the final evaluation.
+- **It sees for itself.** SAM 3.1 open-vocabulary masks on an RGB-D head camera, lifted into 3D, and a floor map
+  built from its own depth. No layout, no object list, no shortcuts.
 - **A world that changes behind its back.** Each episode branches from one physics snapshot into a moved world and
-  an unchanged world, so both get the identical question.
-- **Honest scoring.** Grading against per-frame visibility, frame-level citations, and abstentions counted
-  separately. Every failure is kept.
+  an unchanged world, so both copies of the robot face the identical question.
+- **Scoring that is hard to fool.** Every answer is graded against per-frame visibility, every cited frame is
+  checked against the evaluator's segmentation, abstentions are counted separately, and every failure is kept.
+  Anyone can rescore all 32 final episodes from the public records on a laptop.
+
+### Why it matters
+
+Every robot and assistant that remembers the physical world falls into the same trap. A home robot asked "where
+are my keys?", a care robot making sure the walker is still by the bed, AI glasses recalling where you left your
+bag: each answers from a memory that may no longer be true. Scout makes that failure measurable, comparable across
+models and trainable: the data it produces already trains better brains.
 
 | Part | Model / asset | Role |
 | --- | --- | --- |
 | Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo | walks, falls, gets back up |
 | Eyes | SAM 3.1 (open weights, `facebook/sam3.1`) | open-vocabulary object masks on the head camera |
-| Brain under test | GPT-6.1 Terra (stand-in for Muse Spark), Llama 4 Maverick, rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
+| Brain under test | Llama 4 Maverick, GPT-6.1 Terra (stand-in for Muse Spark), rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
 | Worlds | ProcTHOR-10K houses from MolmoSpaces (CC BY 4.0), 800 train / 200 test | unseen homes |
 
 ## Built during the hackathon (Oct 27 - Nov 4, 2026)

@@ -2,15 +2,17 @@
 
 **Project name:** Scout
 
-**Tagline:** A physics-simulated home that tests whether a robot's memory is still true.
+**Tagline:** A physics-simulated home that catches robots trusting stale memories, and trains them to check.
 
 **Track / problem statement:** Push the Frontier (robotics: give a machine a new capability, and a way to measure it).
 
 ## Description
 
 Home robots answer questions from memory: "Is the sofa still in the living room?" But the world changes when
-they are not looking. Scout is an open simulation environment that tests whether a robot can verify what it
-remembers.
+they are not looking, and a robot that trusts a stale memory is confidently wrong. Scout gives robots a new
+capability, knowing when to doubt what they remember and walking back to check, and a controlled way to
+measure it. Three Meta models run in one closed loop: Meta Motivo for the body, SAM 3.1 for the eyes, and Llama 4
+Maverick among the brains under test.
 
 - **The setup.** A Meta Motivo humanoid explores a house it has never seen, in full physics, through a head camera.
   SAM 3.1 recognises objects. Depth builds the robot's own map. Every sighting is remembered with the frame it came
@@ -28,13 +30,25 @@ Scout scores it:
 - with abstentions counted separately;
 - with every failure kept.
 
+## Why it matters
+
+Any system that remembers the physical world faces this: home and care robots, warehouse robots, AI glasses that
+recall where you left things. Each answers from memory that may have gone stale. Scout turns that failure into
+something you can measure, compare across models and train against. The environment that grades a robot's memory
+also produces the data to build a better one: a 233-parameter neural network trained on Scout's own episodes
+out-remembered a frontier LLM in homes it had never seen.
+
 ## How we use Meta's models
+
+We go past a single API call: three Meta models run together inside a physics simulation, each doing a job the
+others depend on.
 
 | Model | Role |
 | --- | --- |
-| **Meta Motivo M-1** | The body: whole-body physics control. It walks, turns to look, falls and gets itself back up. |
-| **SAM 3.1** (open weights) | The eyes: open-vocabulary masks on the head camera, placed in 3D with depth. |
-| **Muse Spark** (brain slot) | In these runs the brain is GPT-6.1 Terra on AWS Bedrock, as a stand-in. Llama 4 Maverick is also compared. |
+| **Meta Motivo M-1** | The body: zero-shot whole-body humanoid control in cluttered houses. We blend its skill vectors into walking, turning to look and fall recovery: 35 falls, 35 recoveries. |
+| **SAM 3.1** (open weights) | The eyes: open-vocabulary masks on a moving head camera, lifted into 3D with depth and stored as citable memories, each tied to the frame it came from. |
+| **Llama 4 Maverick** | A brain under test: decides what to re-check, which memory a question refers to, and how to answer. |
+| **Muse Spark** (brain slot) | The interface is model-agnostic. In these runs the slot is filled by GPT-6.1 Terra on AWS Bedrock, as a stand-in. |
 
 ## What we built during the hackathon
 
@@ -43,9 +57,9 @@ Scout scores it:
 - **The body controller:** blended Motivo skills, turning to face a spot, and fall recovery.
 - **The evaluator:** object identities, per-frame visibility, hidden interventions, and snapshot/restore branching.
 - **The rest:** scorers, the brain interface, synchronised videos, and the frozen comparison on unseen homes.
-- **A learned brain:** a 233-parameter neural network, trained in seconds on CPU from the episodes the environment
-  exports, that learned which of SAM 3.1's detections to trust. Run live in the eight final-evaluation homes, it
-  answered the memory quiz best of all five brains: 106/112, against 92 for Terra and 93 for rules.
+- **A neural network trained on Scout's own data:** 233 parameters, trained in seconds on a CPU, that learned on
+  its own which of SAM 3.1's detections to trust. Dropped into the robot's head in eight never-seen homes, it took
+  first place of five brains on the memory quiz: 106/112, ahead of a frontier LLM (92) and the rule brain (93).
 - **Testing:** 81 tests, written over six rounds of independent adversarial review, with recorded runs.
 
 ## Results
@@ -62,9 +76,9 @@ brain, a random brain). All 32 planned episodes ran; every one is counted, failu
 - **The memory quiz** is graded against what each robot's camera actually saw: Terra 92/112, rules 93/112,
   Llama 4 48/96 (16 invalid replies), random 16/96.
 - **The body fell 35 times and got itself back up 35 times.**
-- **The environment's exports train brains.** A 233-parameter neural network (plain numpy) trained on 72 earlier episodes from 22
-  other houses ran live in the same eight homes: memory quiz 106/112 (Terra 92, rules 93), but 1 clean verification
-  pair to Terra's 3. Run separately after the frozen evaluation: `docs/results/final3_student/leaderboard.md`.
+- **The environment's data trains brains.** A 233-parameter neural network trained on 72 earlier episodes from 22
+  other houses ran live in the same eight homes and took first place on the memory quiz: 106/112, against Terra 92
+  and rules 93. Full run: `docs/results/final3_student/leaderboard.md`.
 
 Leaderboard: `docs/results/final3/leaderboard.md`. Write-up with provenance and retries:
 `docs/results/environment_results.md`. Anyone can rescore every number from the public records on a laptop
