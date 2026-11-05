@@ -33,7 +33,7 @@ throughout.
 
 - **The body's check decides "still there", "not found" or "unclear".** Fixed rules on SAM 3.1 detections and depth:
   "not found" needs the depth camera to see past the remembered spot.
-- **The brain** (Muse Spark 1.3, standing in for Muse Spark) **decides** when to re-check during exploration and
+- **The brain** (Muse Spark 1.3 on Meta Model API) **decides** when to re-check during exploration and
   which remembered object a question is about. It also answers the memory quiz, citing frames.
 - **The memory-only answer is a rule, not the brain:** whatever memory says, without looking.
 - **Targets** are objects with no other object of the same kind within 2.5 m, so the question names one
@@ -41,7 +41,8 @@ throughout.
 
 ## What must stay true on screen
 
-- Never relabel Muse Spark as Muse Spark.
+- Never call the brain a different model than the one that ran. If you swap in Muse Spark Open or `muse-spark-1.1`,
+  say so.
 - The student's quiz result is offline, on memories other brains built. Say "answers the memory quiz", not "explores better".
 - "Not found" never means "it detected the move".
 - Use the final leaderboard's numbers, including abstentions, wrong targets and episodes that did not run.

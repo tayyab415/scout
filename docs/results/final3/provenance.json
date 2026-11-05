@@ -337,7 +337,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_167_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -353,7 +353,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_300_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -369,7 +369,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_322_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -385,7 +385,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_330_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -401,7 +401,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_359_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -417,7 +417,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_489_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -433,7 +433,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_752_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",
@@ -449,7 +449,7 @@
  },
  {
   "episode": "spark_procthor-10k-val_val_893_s0",
-  "brain": "spark (Muse Spark stand-in)",
+  "brain": "muse-spark-1.3",
   "brain_model": "muse-spark-1.3",
   "host": "modal",
   "scout_commit": "1cfe674af54fe9d6f853014948b1a8ff968bb3d4",

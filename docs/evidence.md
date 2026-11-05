@@ -10,7 +10,7 @@ hashes each file.
 | --- | --- |
 | [demo_final_silent.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/demo_final_silent.mp4) | The 2:43 demo cut before narration (`scripts/demo_cut.py`). |
 | [demo_final_silent_student.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/demo_final_silent_student.mp4) | The 2:52 cut: the 2:43 cut with the student card (`scripts/student_card.py`, 9 s) inserted at 2:17.067. |
-| [branch_spark_752.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/branch_spark_752.mp4) | The branch shot: one saved state split into two worlds, the sofa moved in one (`scripts/branch_video.py`). |
+| [branch shot](https://github.com/tayyab415/scout/releases/tag/final3-evidence) | The branch shot: one saved state split into two worlds, the sofa moved in one (`scripts/branch_video.py`). |
 | [social_20s.mp4](https://github.com/tayyab415/scout/releases/download/final3-evidence/social_20s.mp4) | 20 s clip for posting. |
 
 ## Failures
@@ -41,7 +41,7 @@ each record.
 curl -LO https://github.com/tayyab415/scout/releases/download/final3-evidence/final3-records.tar.gz
 mkdir records && tar xzf final3-records.tar.gz -C records
 python scripts/rescore_records.py records                                  # every outcome, all 64 arms, plus quiz denominators
-python scripts/score_episode.py records/spark_procthor-10k-val_val_752_s0  # one episode
+python scripts/score_episode.py records/<brain>_<house>_s0       # one episode
 ```
 
 Expected output is committed in `docs/results/final3/rescore_from_release.txt`:

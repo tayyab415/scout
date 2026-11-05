@@ -7,7 +7,7 @@ and the CPU tests run anywhere.
 
 ```bash
 git clone https://github.com/tayyab415/scout && cd scout
-uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
+uv venv && uv pip install -e . modal requests pytest pillow "imageio[ffmpeg]"
 source .venv/bin/activate                  # or prefix commands with .venv/bin/ (python, modal)
 python -m pytest -q tests        # CPU only: map, memory, scorers, recording and review contracts
 modal token new                            # Modal account
@@ -18,11 +18,16 @@ export SCOUT_VOLUME=scout-data             # any Modal volume name; created on f
 
 | What | Why | How |
 | --- | --- | --- |
-| Hugging Face access to `facebook/sam3.1` | SAM 3.1 open weights (gated; request access on the model page) | `huggingface-cli login`, so a token sits at `~/.cache/huggingface/token`; it is passed to Modal as an ephemeral secret |
-| Meta Model API in us-east-1 with `muse-spark-1.3` and `Llama-4-Maverick-17B-128E-Instruct-FP8` | the LLM brains (the rules and random brains need nothing) | default profile in `~/.aws/credentials`, passed to Modal as an ephemeral secret |
+| Meta Model API key | Muse Spark 1.3 (`muse-spark-1.3`) and the other brains; SAM 3.1 (`sam-3.1`) uses the same key | create a key at [dev.meta.ai](https://dev.meta.ai) and `export MODEL_API_KEY=...`; it is passed to Modal as an ephemeral secret. `MODEL_API_KEY_FILE` reads it from a file instead |
+| Hugging Face access to `facebook/sam3.1` | only if you run SAM 3.1 from its open weights rather than the API (gated; request access on the model page) | `huggingface-cli login`, so a token sits at `~/.cache/huggingface/token`; it is passed to Modal as an ephemeral secret |
+| Llama API key (optional) | the Llama 4 Maverick baseline only; the rules, random and student brains need no key at all | `export LLAMA_API_KEY=...` |
 | Modal GPU (L40S) | Motivo body, MuJoCo rendering, SAM 3.1 | about 2.2 x slower than real time per episode |
 
 The Motivo M-1 weights (`facebook/metamotivo-M-1`) download automatically and need no login.
+
+Model IDs in the catalog, all behind the same base URL `https://api.meta.ai/v1`: `muse-spark-1.3` (default),
+`muse-spark-1.2`, `muse-spark-1.1`, `muse-wonder-1.0`, and `sam-3.1`. Docs: <https://dev.meta.ai/docs/models>.
+Muse Spark Open is not on the API; self-host it or use a hosted provider and point `SCOUT_LLM_BASE_URL` at it.
 
 ## 3. Data on the volume
 
@@ -55,9 +60,9 @@ uv venv /opt/venv --python 3.12 && source /opt/venv/bin/activate
 uv pip install torch==2.10.0 torchvision --index-url https://download.pytorch.org/whl/cu128
 git clone https://github.com/facebookresearch/sam3.git /opt/sam3 && uv pip install -e /opt/sam3
 uv pip install "imageio[ffmpeg]" pillow einops decord pycocotools psutil scipy pandas opencv-python-headless \
-    mujoco==3.17.0 h5py boto3 "metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git"
+    mujoco==3.17.0 h5py requests "metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git"
 uv pip install -e .
-export MUJOCO_GL=egl SAM3_DIR=/opt/sam3 HF_TOKEN_PATH=~/.cache/huggingface/token
+export MUJOCO_GL=egl SAM3_DIR=/opt/sam3 HF_TOKEN_PATH=~/.cache/huggingface/token MODEL_API_KEY=...
 ```
 
 Put the data under `/data` (or pass `--data-root`): `house/{scenes,objects,layouts}` from section 3 (copy them off

@@ -28,12 +28,12 @@ but we cannot prove it from the log.
 ## `brain_model` (16 LLM rows)
 
 The manifests record the brain's display name, which `LLMBrain` derives from the model id
-(`src/scout/brains.py` at `1cfe674`, lines 23-24 and 46):
+(`src/scout/brains.py`):
 
-| display name in manifest | Model API model id |
+| display name in manifest | model id |
 | --- | --- |
-| `spark (Muse Spark stand-in)` | `muse-spark-1.3` |
-| `llama4-maverick` | `Llama-4-Maverick-17B-128E-Instruct-FP8` |
+| `muse-spark-1.3` | `muse-spark-1.3` (Meta Model API) |
+| `llama4-maverick` | `Llama-4-Maverick-17B-128E-Instruct-FP8` (Llama API) |
 
 A model passed as `llm:<id>` would show the raw id as its name, so the display name identifies the model.
 

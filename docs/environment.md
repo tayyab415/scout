@@ -5,7 +5,7 @@
 ```python
 from scout.env.core import ScoutEnv, PROMPTS
 from scout.env.agent import Agent
-from scout.brains import make_brain            # "spark", "llama4", "rules", "random", "student", or "llm:<Meta Model API model id>"
+from scout.brains import make_brain            # "spark", "llama4", "rules", "random", "student", or "llm:<Model API model id>"
 
 env = ScoutEnv("procthor-10k-val_val_935", seed=0, eyes=Sam31())   # GPU: Motivo body, MuJoCo house, SAM 3.1
 env.reset()                                     # random free start from the seed

@@ -26,7 +26,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch==2.10.0", "torchvision", index_url="https://download.pytorch.org/whl/cu128")
          .run_commands("git clone https://github.com/facebookresearch/sam3.git /sam3 && pip install -e /sam3")
          .pip_install("imageio[ffmpeg]", "pillow", "einops", "decord", "pycocotools", "psutil", "scipy", "pandas",
-                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "boto3")
+                      "opencv-python-headless", "mujoco==3.17.0", "h5py", "requests")
          .pip_install("metamotivo[huggingface,humenv] @ git+https://github.com/facebookresearch/metamotivo.git")
          .env({"HF_HOME": "/data/hf", "MUJOCO_GL": "egl"})
          .add_local_dir(SRC, "/pkg")
@@ -34,22 +34,20 @@ image = (modal.Image.debian_slim(python_version="3.12")
 _tok = os.path.expanduser("~/.cache/huggingface/token")
 
 
-def _aws_env() -> dict:
+def _model_env() -> dict:
+    """Meta Model API key for the brains, passed as an ephemeral Modal secret (never written to disk)."""
     if not modal.is_local():
-        return {"AWS_DEFAULT_REGION": "us-east-1"}
-    import configparser
-    cp = configparser.ConfigParser()
-    cp.read(os.path.expanduser("~/.aws/credentials"))
-    d = cp["default"] if "default" in cp else {}
-    env = {"AWS_ACCESS_KEY_ID": d.get("aws_access_key_id", ""), "AWS_SECRET_ACCESS_KEY": d.get("aws_secret_access_key", ""),
-           "AWS_DEFAULT_REGION": "us-east-1"}
-    if d.get("aws_session_token"):
-        env["AWS_SESSION_TOKEN"] = d["aws_session_token"]
-    return env
+        return {}
+    key = os.environ.get("MODEL_API_KEY", "")
+    if not key:
+        p = os.path.expanduser(os.environ.get("MODEL_API_KEY_FILE", "~/.config/meta/model_api_key"))
+        if os.path.exists(p):
+            key = open(p).read().strip()
+    return {"MODEL_API_KEY": key, "LLAMA_API_KEY": os.environ.get("LLAMA_API_KEY", "")}
 
 
 secrets = [modal.Secret.from_dict({"HF_TOKEN": open(_tok).read().strip() if modal.is_local() and os.path.exists(_tok) else ""}),
-           modal.Secret.from_dict(_aws_env())]
+           modal.Secret.from_dict(_model_env())]
 
 
 @app.function(image=image, volumes={"/data": vol}, gpu="L40S", cpu=8, memory=65536, timeout=7200, secrets=secrets)

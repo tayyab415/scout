@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from scout.body.follow import densify  # noqa: E402
 from scout.world.layout import Layout  # noqa: E402
 
-BRAIN = {"teacher": "Llama 4 Maverick teacher (stand-in for Muse Spark)", "nearest": "nearest-opening rule",
+BRAIN = {"teacher": "Llama 4 Maverick teacher", "nearest": "nearest-opening rule",
          "oracle_frontier": "oracle"}
 
 

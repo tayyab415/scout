@@ -36,9 +36,9 @@ def make_policy(name: str, seed: int, log_path: str | None):
     if name.startswith("teacher"):
         from scout.teacher.llm import MetaModelChat, OpenAICompatChat
         from scout.teacher.policy import TeacherPolicy
-        backend = name.split(":", 1)[1] if ":" in name else "Meta Model API"
-        llm = OpenAICompatChat() if backend == "openai" else MetaModelChat(model_id=backend if backend != "Meta Model API" else
-                                                                        "Llama-4-Maverick-17B-128E-Instruct-FP8")
+        backend = name.split(":", 1)[1] if ":" in name else "meta"
+        llm = OpenAICompatChat() if backend == "openai" else MetaModelChat(
+            model_id=backend if backend != "meta" else "muse-spark-1.3")
         return TeacherPolicy(llm, log_path)
     raise ValueError(name)
 

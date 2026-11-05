@@ -11,8 +11,8 @@
 Home robots answer questions from memory: "Is the sofa still in the living room?" But the world changes when
 they are not looking, and a robot that trusts a stale memory is confidently wrong. Scout gives robots a new
 capability, knowing when to doubt what they remember and walking back to check, and a controlled way to
-measure it. Three Meta models run in one closed loop: Meta Motivo for the body, SAM 3.1 for the eyes, and Llama 4
-Maverick among the brains under test.
+measure it. Three Meta models run in one closed loop: Meta Motivo for the body, SAM 3.1 for the eyes, and Muse
+Spark 1.3 for the brain. The eyes and the brain are served by Meta Model API, on Modal GPUs.
 
 - **The setup.** A Meta Motivo humanoid explores a house it has never seen, in full physics, through a head camera.
   SAM 3.1 recognises objects. Depth builds the robot's own map. Every sighting is remembered with the frame it came
@@ -43,13 +43,13 @@ out-remembered a frontier LLM in homes it had never seen.
 We go past a single API call: three Meta models run together inside a physics simulation, each doing a job the
 others depend on.
 
-| Model | Role |
-| --- | --- |
-| **Meta Motivo M-1** | The body: zero-shot whole-body humanoid control in cluttered houses. We blend its skill vectors into walking, turning to look and fall recovery: 35 falls, 35 recoveries. |
-| **SAM 3.1** (open weights) | The eyes: open-vocabulary masks on a moving head camera, lifted into 3D with depth and stored as citable memories, each tied to the frame it came from. |
-| **Llama 4 Maverick** | A brain under test: decides what to re-check, which memory a question refers to, and how to answer. |
-| **V-JEPA 2** | A world model for the robot's own eyes: frozen V-JEPA 2 encoder plus our 11.4M-parameter action-conditioned predictor (V-JEPA 2-AC recipe), trained on 104,730 head-camera frames. In 12 unseen houses, knowing the action predicts the next view better than an action-blind twin. |
-| **Muse Spark** (brain slot) | The interface is model-agnostic. In these runs the slot is filled by Muse Spark 1.3 on Meta Model API, as a stand-in. |
+| Model | How it runs | Role |
+| --- | --- | --- |
+| **Meta Motivo M-1** | open weights, MuJoCo | The body: zero-shot whole-body humanoid control in cluttered houses. We blend its skill vectors into walking, turning to look and fall recovery: 35 falls, 35 recoveries. |
+| **SAM 3.1** | Meta Model API (`sam-3.1`), same key as the brain | The eyes: open-vocabulary masks on a moving head camera, lifted into 3D with depth and stored as citable memories, each tied to the frame it came from. |
+| **Muse Spark 1.3** | Meta Model API (`muse-spark-1.3`) | The brain under test: decides what to re-check, which memory a question refers to, and how to answer. `muse-spark-1.1` and Llama 4 Maverick are compared as cheaper baselines. |
+| **V-JEPA 2** | frozen encoder, predictor trained here | A world model for the robot's own eyes: frozen V-JEPA 2 encoder plus our 11.4M-parameter action-conditioned predictor (V-JEPA 2-AC recipe), trained on 104,730 head-camera frames. In 12 unseen houses, knowing the action predicts the next view better than an action-blind twin. |
+| **Modal** | L40S | Runs the physics, the rendering and the segmentation for every episode. |
 
 **Research foundations.** Scout builds on Meta Motivo / FB-CPR (arXiv:2504.11054), SAM 3 (arXiv:2511.16719),
 V-JEPA 2 (arXiv:2506.09985) and the JEPA line (I-JEPA, V-JEPA, LeJEPA), and LeCun's *A Path Towards Autonomous

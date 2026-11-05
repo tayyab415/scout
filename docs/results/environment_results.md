@@ -134,8 +134,8 @@ Falls, recoveries and own checks are counted on the unchanged arm (it shares the
     episode's GPU memory;
   - after the fix (one fresh process per episode), all 6 completed;
   - all attempts are in `aws_runs.jsonl`.
-- **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `muse-spark-1.3` and
-  `Llama-4-Maverick-17B-128E-Instruct-FP8` on Meta Model API (us-east-1).
+- **SAM 3:** the commit is recorded per episode in its manifest. **Models:** `muse-spark-1.3` on Meta Model API and
+  Llama 4 Maverick through the Llama API.
 
 **Recordings and records:** public, no credentials needed, in the GitHub release
 [`final3-evidence`](https://github.com/tayyab415/scout/releases/tag/final3-evidence): the demo cut, branch shot,

@@ -16,10 +16,10 @@ so it is wrong in one of them. The robot that walks back and looks gets both rig
 the spot where the sofa was.
 
 **Scout gives robots a new capability: knowing when their memory has gone stale, and going back to check.** It is
-an open, physics-simulated proving ground where three Meta models run in one closed loop: Meta Motivo moves the body,
-SAM 3.1 sees, and Llama 4 Maverick is one of the brains put to the test. Any model plugs in through four methods.
-Scout runs the physics, the eyes and the hidden interventions, then grades every answer against what the robot's
-camera actually saw, frame by frame.
+an open, physics-simulated proving ground where three Meta models run in one closed loop: Meta Motivo moves the
+body, SAM 3.1 sees through the head camera, and Muse Spark 1.3 is the brain under test. The brain and the eyes are
+served by Meta Model API. Any model plugs in through four methods. Scout runs the physics, the eyes and the hidden
+interventions, then grades every answer against what the robot's camera actually saw, frame by frame.
 
 **It also trains brains.** A 233-parameter neural network, trained in seconds on Scout's own episodes, took over
 the robot's head and out-remembered Muse Spark 1.3 in eight never-seen homes: 106 of 112 against 92.
@@ -42,13 +42,20 @@ are my keys?", a care robot making sure the walker is still by the bed, AI glass
 bag: each answers from a memory that may no longer be true. Scout makes that failure measurable, comparable across
 models and trainable: the data it produces already trains better brains.
 
-| Part | Model / asset | Role |
+| Part | Model and how it runs | Role |
 | --- | --- | --- |
-| Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo | walks, falls, gets back up |
-| Eyes | SAM 3.1 (open weights, `facebook/sam3.1`) | open-vocabulary object masks on the head camera |
-| Brain under test | Llama 4 Maverick, Muse Spark 1.3 (Meta Model API), rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
+| Body | Meta Motivo M-1 (FB-CPR), SMPL humanoid in MuJoCo, open weights | walks, falls, gets back up |
+| Eyes | SAM 3.1: `sam-3.1` on Meta Model API, or its open weights on Modal | open-vocabulary object masks on the head camera |
+| Brain under test | Muse Spark 1.3 (`muse-spark-1.3` on Meta Model API), Muse Spark 1.1, Llama 4 Maverick, rules, random, and a 233-parameter neural network trained on Scout's own episodes | when to re-check; which object a question is about; the answers |
 | World model | V-JEPA 2 (frozen ViT-L encoder) | our action-conditioned predictor of the body's next head-camera view |
 | Worlds | ProcTHOR-10K houses from MolmoSpaces (CC BY 4.0), 800 train / 200 test | unseen homes |
+| Compute | Modal L40S: Motivo physics, MuJoCo rendering, segmentation | the whole episode |
+
+One `MODEL_API_KEY` covers `muse-spark-1.3`, `muse-spark-1.2`, `muse-spark-1.1`, `muse-wonder-1.0` and `sam-3.1`
+at `https://api.meta.ai/v1`. The brain is a plug-in: `--brain spark`, `--brain spark-1.1`, `--brain llama4`, or
+`--brain llm:<model id>` for anything else in the catalog. Llama 4 Maverick is the cheap baseline, and it can be
+swapped for Muse Spark Open (the 816B open-weight release, served on Modal through vLLM or SGLang) or for
+`muse-spark-1.1`, the smallest model in the API.
 
 ## Built during the hackathon (Oct 27 - Nov 4, 2026)
 
@@ -82,7 +89,8 @@ re-checks and answer questions. See `docs/environment.md` for the API, the tasks
 Full setup from scratch is in `docs/setup.md`: accounts, the house download, skill vectors and every command.
 
 ```bash
-uv venv && uv pip install -e . modal boto3 pytest pillow "imageio[ffmpeg]"
+uv venv && uv pip install -e . modal requests pytest pillow "imageio[ffmpeg]"
+export MODEL_API_KEY=...                                  # https://dev.meta.ai — one key for Muse Spark and SAM 3.1
 .venv/bin/python -m pytest -q tests                      # CPU only: 81 tests, including six rounds of independent review
 python scripts/quiz_offline.py records                   # the memory quiz answered offline by any brain, scored by the environment
 python scripts/train_student.py --records <dev runs> --exclude-houses configs/frozen_final3.json   # retrain the student
@@ -117,7 +125,8 @@ Scout builds directly on Meta research, and on the broader embodied-AI literatur
 | Balestriero and LeCun, *LeJEPA*, 2025. [arXiv:2511.08544](https://arxiv.org/abs/2511.08544) | Current JEPA training theory; context for the world-model work. |
 | Majumdar et al., *OpenEQA: Embodied Question Answering in the Era of Foundation Models*, CVPR 2024. [Project](https://open-eqa.github.io/) | Meta's benchmark for answering questions from episodic memory. Scout adds the missing case: the world changed after the memory was formed. |
 | Puig et al., *Habitat 3.0: A Co-Habitat for Humans, Avatars and Robots*, 2023. [arXiv:2310.13724](https://arxiv.org/abs/2310.13724) | Meta's embodied simulation platform; Scout brings full-body humanoid physics to the home-memory setting. |
-| Meta, *The Llama 4 herd*, 2025. [Blog](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) | Llama 4 Maverick, one of the brains under test. |
+| Meta, *Muse Spark* model page, 2026. [dev.meta.ai](https://dev.meta.ai/models/muse-spark) | Muse Spark 1.3, the brain under test, served through Meta Model API. |
+| Meta, *The Llama 4 herd*, 2025. [Blog](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) | Llama 4 Maverick, the cheap baseline brain. |
 | Deitke et al., *ProcTHOR: Large-Scale Embodied AI Using Procedural Generation*, 2022. [arXiv:2206.06994](https://arxiv.org/abs/2206.06994) | The houses (via Ai2 MolmoSpaces). |
 
 ## License

@@ -3,7 +3,7 @@ head-camera frames are saved with the detection box drawn.
 
     python scripts/ask.py --run runs/live/gate60 "Where did you see a sofa?" "Did you see a bathtub?"
 
-Model: Muse Spark 1.3 on Meta Model API as a stand-in for Muse Spark (set SCOUT_LLM_* to use the Meta Model API instead).
+Model: Muse Spark 1.3 on Meta Model API (`muse-spark-1.3`; set SCOUT_QA_MODEL to swap the model).
 """
 from __future__ import annotations
 
@@ -12,10 +12,11 @@ import json
 import os
 import re
 
-import boto3
 from PIL import Image, ImageDraw
 
-MODEL = os.environ.get("SCOUT_QA_MODEL", "muse-spark-1.3")
+from scout import modelapi
+
+MODEL = os.environ.get("SCOUT_QA_MODEL", modelapi.DEFAULT_MODEL)
 SYSTEM = """You are the memory of a humanoid body that has been exploring a house it had never seen before.
 You know ONLY what is in the memory table below: things its head camera recognised, with time (seconds since it
 woke up), confidence, and position on its own map (x, y in metres). Lines saying "NOT seen at its last known place"
@@ -49,11 +50,8 @@ def track_summary(mem: dict) -> str:
 
 
 def ask(mem: dict, question: str) -> dict:
-    c = boto3.client("modelapi", region_name="us-east-1")
     msg = f"Memory table:\n{track_summary(mem)}\n\nQuestion: {question}"
-    r = c.converse(modelId=MODEL, system=[{"text": SYSTEM}], messages=[{"role": "user", "content": [{"text": msg}]}],
-                   inferenceConfig={"maxTokens": 4000})
-    text = [b["text"] for b in r["output"]["message"]["content"] if "text" in b][-1]
+    text, _ = modelapi.chat(SYSTEM, msg, model=MODEL, max_tokens=4000)
     m = re.search(r"\{.*\}", text, re.S)
     return json.loads(m.group(0)) if m else {"answer": text, "cited_sightings": [], "observed": False}
 
